@@ -10,7 +10,7 @@ void Discord_Overwatch::getStats(ValueMap payload){
     String discriminator = payload["d"]["author"]["discriminator"];
 	
 	Cout() << "Event Overwatch" <<"\n";
-	ptrBot->CreateMessage(channel, "Event Overwatch !");
+	ptrBot->CreateMessage(channel, "Event " + name +" !");
 }
 	
 Discord_Overwatch::Discord_Overwatch(Upp::String _name, Upp::String _prefix){
