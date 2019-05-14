@@ -1,0 +1,13 @@
+description "\377BI153,153,153";
+
+uses
+	Core,
+	Discord_Minecraft;
+
+file
+	Discord_Overwatch.h,
+	Discord_Overwatch.cpp;
+
+mainconfig
+	"" = "";
+
