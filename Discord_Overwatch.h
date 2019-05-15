@@ -12,7 +12,7 @@ class Discord_Overwatch: public DiscordModule{
 	public:
 		
 		Discord_Overwatch(Upp::String _name, Upp::String _prefix);
-		void Event(ValueMap payload);
+		void Events(ValueMap payload);
 	
 	
 };
