@@ -11,6 +11,7 @@ void Discord_Overwatch::getStats(ValueMap payload){
 	
 	Cout() << "Event Overwatch" <<"\n";
 	ptrBot->CreateMessage(channel, "Clément est un nazi !");
+	//Ce commentaire permet de tester un git push !
 }
 	
 Discord_Overwatch::Discord_Overwatch(Upp::String _name, Upp::String _prefix){
