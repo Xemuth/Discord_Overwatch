@@ -2,10 +2,12 @@ description "\377BI153,153,153";
 
 uses
 	Core,
-	Discord_Minecraft;
+	Discord_Minecraft,
+	plugin/sqlite3;
 
 file
 	Discord_Overwatch.h,
+	Overwatch_DataBase.sch,
 	Discord_Overwatch.cpp;
 
 mainconfig
