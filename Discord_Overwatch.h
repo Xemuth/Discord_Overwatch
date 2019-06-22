@@ -12,19 +12,17 @@ using namespace Upp;
 class Discord_Overwatch: public DiscordModule{
 	private:
 		bool bddLoaded = false;
-		Sqlite3Session sqlite3;
-	
+		Sqlite3Session sqlite3; //DataBase
+		String channelLastMessage=""; //hook to latest message chan 
 		
 		void getStats(ValueMap payload);
 		void executeSQL(ValueMap payload);
+		void testApi(ValueMap payload);
 		
 		void prepareOrLoadBDD(); //Used to load BDD
 	public:
-		
 		Discord_Overwatch(Upp::String _name, Upp::String _prefix);
 		void Events(ValueMap payload);
-	
-	
 };
 
 #endif
