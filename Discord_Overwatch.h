@@ -7,16 +7,13 @@ using namespace Upp;
 #define SCHEMADIALECT <plugin/sqlite3/Sqlite3Schema.h>
 #define MODEL <Discord_Overwatch/Overwatch_DataBase.sch>
 #include "Sql/sch_header.h"
-
+#define FREE_DATA(t) SCHEMA(t "\n", NULL)
 
 class Discord_Overwatch: public DiscordModule{
 	private:
 		bool bddLoaded = false;
 		Sqlite3Session sqlite3; //DataBase
-		String channelLastMessage=""; //hook to latest message chan 
-	    String AuthorId =""; 
-	    String Message ="";
-		Vector<String> MessageArgs;
+
 
 		//Test
 		void getStats(ValueMap payload);
@@ -47,12 +44,13 @@ class Discord_Overwatch: public DiscordModule{
 		//!ow Eupd Sombre est mon histoire
 		void ForceEquipeUpdate(ValueMap payload); // Idk if only ppl who have right on equipe must do it or letting it free.
 		
+		int isTeam(String TeamName,String userId,String& teamId); // team ID, is here to handle team id
 		bool isRegestered(String Id);
 		void RetrieveData(); //USed to refresh all team 
 		void prepareOrLoadBDD(); //Used to load BDD
 	public:
 		Discord_Overwatch(Upp::String _name, Upp::String _prefix);
-		void Events(ValueMap payload);
+		void EventsMessageCreated(ValueMap payload);
 };
 
 #endif

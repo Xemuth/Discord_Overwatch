@@ -8,7 +8,7 @@ void Discord_Overwatch::getStats(ValueMap payload){
 	Upp::String message = payload["d"]["content"];
 	if(message.Find("test")!=-1){
 		Cout() << "Event Overwatch" <<"\n";
-		ptrBot->CreateMessage(channelLastMessage, "Event ow");
+		ptrBot->CreateMessage(ChannelLastMessage, "Event ow");
 	}
 	//Ce commentaire permet de tester un git push !
 }
@@ -33,13 +33,13 @@ void Discord_Overwatch::executeSQL(ValueMap payload){
 					result<<"\n";
 				}
 				if(result.GetCount() == 0) result <<"No values";
-				ptrBot->CreateMessage(channelLastMessage,result);	
+				ptrBot->CreateMessage(ChannelLastMessage,result);	
 			}else{
 				sql.Execute(Message);
-				ptrBot->CreateMessage(channelLastMessage,sql.ToString());
+				ptrBot->CreateMessage(ChannelLastMessage,sql.ToString());
 			}
 		}else{
-			ptrBot->CreateMessage(channelLastMessage,"Bdd non chargée");
+			ptrBot->CreateMessage(ChannelLastMessage,"Bdd non chargée");
 		}
 	}
 }
@@ -51,27 +51,31 @@ void Discord_Overwatch::testApi(ValueMap payload){
 		reqApi.Url("https://ow-api.com/v1/stats/pc/euw/" + MessageArgs[1] + "/profile");
 		reqApi.GET();
 		auto json = ParseJSON(reqApi.Execute());
-		ptrBot->CreateMessage(channelLastMessage,json["rating"].ToString());
+		ptrBot->CreateMessage(ChannelLastMessage,json["rating"].ToString());
 	}else{
-		ptrBot->CreateMessage(channelLastMessage,"Error url");
+		ptrBot->CreateMessage(ChannelLastMessage,"Error url");
 	}
 }
 
 //!ow register BASTION#21406 Clément
 void Discord_Overwatch::Register(ValueMap payload){// The main idea is " You must be registered to be addable to an equipe or create Equipe
-	if(MessageArgs.GetCount()>2){
+	if(MessageArgs.GetCount()>=2){
 		try{
 			Sql sql;
 			if(MessageArgs.GetCount() == 3){
-				sql*Insert(OW_PLAYERS)(BATTLE_TAG,MessageArgs[1])(DISCORD_ID,AuthorId)(COMMUN_NAME,MessageArgs[2]);
-				ptrBot->CreateMessage(channelLastMessage,"Enregistrement réussie");
+				if(sql*Insert(OW_PLAYERS)(BATTLE_TAG,MessageArgs[1])(DISCORD_ID,AuthorId)(COMMUN_NAME,MessageArgs[2])){
+					ptrBot->CreateMessage(ChannelLastMessage,"Enregistrement réussie");
+					return;
+				}
 			}else if (MessageArgs.GetCount() == 2){
-				sql*Insert(OW_PLAYERS)(BATTLE_TAG,MessageArgs[1])(DISCORD_ID,AuthorId)(COMMUN_NAME,"");
-				ptrBot->CreateMessage(channelLastMessage,"Enregistrement réussie");	
-			}else
-				ptrBot->CreateMessage(channelLastMessage,"Error Registering");
+				if(sql*Insert(OW_PLAYERS)(BATTLE_TAG,MessageArgs[1])(DISCORD_ID,AuthorId)(COMMUN_NAME,"")){
+					ptrBot->CreateMessage(ChannelLastMessage,"Enregistrement réussie");	
+					return;
+				}
+			}
+			ptrBot->CreateMessage(ChannelLastMessage,"Error Registering");
 		}catch(...){
-			ptrBot->CreateMessage(channelLastMessage,"Error Registering");
+			ptrBot->CreateMessage(ChannelLastMessage,"Error Registering");
 		}
 	}
 }
@@ -82,9 +86,9 @@ void Discord_Overwatch::DeleteProfil(ValueMap payload){ //Remove user from the b
 		try{
 			Sql sql;
 			sql*Delete(OW_PLAYERS).Where(DISCORD_ID == AuthorId);
-			ptrBot->CreateMessage(channelLastMessage,"Supression reussie");
+			ptrBot->CreateMessage(ChannelLastMessage,"Supression reussie");
 		}catch(...){
-			ptrBot->CreateMessage(channelLastMessage,"Error deletion");
+			ptrBot->CreateMessage(ChannelLastMessage,"Error deletion");
 		}
 	}
 }
@@ -95,7 +99,7 @@ void Discord_Overwatch::CreateEquipe(ValueMap payload){ //To add an equipe you m
 		try{
 			String teamName="";
 			for(int e =1; e < MessageArgs.GetCount(); e++){
-				if(e!=1 && e !=  MessageArgs.GetCount()-1)teamName << " ";
+				if(e!=1 && e !=  MessageArgs.GetCount())teamName << " ";
 				teamName << MessageArgs[e];
 			}
 			Sql sql;
@@ -103,23 +107,41 @@ void Discord_Overwatch::CreateEquipe(ValueMap payload){ //To add an equipe you m
 				int idInserted = 0;
 				idInserted =std::stoi( sql.GetInsertedId().ToString().ToStd());
 				if(idInserted !=0){
-					if(sql*Insert(OW_EQUIPES_CREATOR)(EQUIPES_ID,idInserted)(CREATOR_DISCORD_ID,AuthorId)){
-						ptrBot->CreateMessage(channelLastMessage,"Ajout d'équipe reussie");
+					if(sql*Insert(OW_EQUIPES_CREATOR)(EC_EQUIPES_ID,idInserted)(EC_CREATOR_DISCORD_ID,AuthorId)){
+						ptrBot->CreateMessage(ChannelLastMessage,"Ajout d'équipe reussie");
 						return;
 					}
 				}
 			}
-			ptrBot->CreateMessage(channelLastMessage,"Erreur création team");
+			ptrBot->CreateMessage(ChannelLastMessage,"Erreur création team");
 		}catch(...){
-			ptrBot->CreateMessage(channelLastMessage,"Erreur création team");
+			ptrBot->CreateMessage(ChannelLastMessage,"Erreur création team");
 		}
 	}else{
-		ptrBot->CreateMessage(channelLastMessage,"You must be registered Before creating team ! ");
+		ptrBot->CreateMessage(ChannelLastMessage,"You must be registered Before creating team ! ");
 	}
 }
 
 //!ow removeEquipe Sombre est mon histoire 
 void Discord_Overwatch::RemoveEquipe(ValueMap payload){ //you must have the right to remove equipe
+if(MessageArgs.GetCount()>=2){
+		String teamName="";
+		for(int e =1; e < MessageArgs.GetCount(); e++){
+			if(e!=1 && e !=  MessageArgs.GetCount())teamName << " ";
+			teamName << MessageArgs[e];
+		}
+		String teamId="";
+		int retour = isTeam(teamName, AuthorId, teamId);
+		if(retour == 2 && teamId.GetCount() != 0 ){
+			Sql sql;
+			sql*Delete(OW_EQUIPES).Where(EQUIPE_ID == teamId);
+			ptrBot->CreateMessage(ChannelLastMessage,"Done ! ");
+		}else if(retour = -1){
+			ptrBot->CreateMessage(ChannelLastMessage,"You're not the team leader !");
+		}else{
+			ptrBot->CreateMessage(ChannelLastMessage,"Team do not exist !");
+		}
+	}
 }
 
 //!ow AddRight @NattyRoots Sombre est mon histoire
@@ -155,32 +177,43 @@ bool Discord_Overwatch::isRegestered(String Id){
 	return false;
 }
 
+int Discord_Overwatch::isTeam(String TeamName,String userId,String &teamId){
+	Sql sql;
+	sql*Select(EQUIPE_ID).From(OW_EQUIPES).InnerJoin(OW_EQUIPES_CREATOR).On(EQUIPE_ID.Of(OW_EQUIPES) == EC_EQUIPES_ID.Of(OW_EQUIPES_CREATOR) ).Where(EQUIPE_NAME == TeamName && EC_CREATOR_DISCORD_ID == userId);
+	LOG(sql.ToString());
+	if(	sql.Fetch()){
+		teamId = sql[EQUIPE_ID].ToString();
+		return 2; // If its ok
+	}
+	sql*Select(EQUIPE_ID).From(OW_EQUIPES).Where(EQUIPE_NAME == TeamName);
+	if(sql.Fetch()){
+		return -1; //if user dt have right of team
+	}
+	return 0; //If team do not exist
+}
+
 Discord_Overwatch::Discord_Overwatch(Upp::String _name, Upp::String _prefix){
 	name = _name;
 	prefix = _prefix;
 	
 	prepareOrLoadBDD();
-	EventsMap.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("test"))this->getStats(e);});
-	EventsMap.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("execsql"))this->executeSQL(e);});
-	EventsMap.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("api"))this->testApi(e);});
-	EventsMap.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("register"))this->Register(e);});
-	EventsMap.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("remove"))this->DeleteProfil(e);});
-	EventsMap.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("createequipe"))this->CreateEquipe(e);});
+	
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("test"))this->getStats(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("execsql"))this->executeSQL(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("api"))this->testApi(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("register"))this->Register(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("remove"))this->DeleteProfil(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("createequipe"))this->CreateEquipe(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("removeequipe"))this->RemoveEquipe(e);});
 }
 
-void Discord_Overwatch::Events(ValueMap payload){ //We admit BDD must be loaded to be active
-	channelLastMessage =  payload["d"]["channel_id"]; //HEre we hook chan  
-	AuthorId = payload["d"]["author"]["id"];
-	Message = payload["d"]["content"];
-	Message.Replace(String("!" +prefix +" "),"");
-	MessageArgs = Split(Message," ");
-	MessageArgs[0] = ToLower(MessageArgs[0]);
-	for(auto &e : EventsMap){
+void Discord_Overwatch::EventsMessageCreated(ValueMap payload){ //We admit BDD must be loaded to be active
+	for(auto &e : EventsMapMessageCreated){
 		if(bddLoaded){
 			e(payload);
 		}
 		else{ 
-			ptrBot->CreateMessage(channelLastMessage,"DataBase not loaded !"); 
+			ptrBot->CreateMessage(ChannelLastMessage,"DataBase not loaded !"); 
 			break;
 		}
 	}
@@ -197,9 +230,10 @@ void Discord_Overwatch::prepareOrLoadBDD(){
 			if(mustCreate){
 				SqlSchema sch(SQLITE3);
 				All_Tables(sch);
-				if(sch.ScriptChanged(SqlSchema::UPGRADE))
+				if(sch.ScriptChanged(SqlSchema::UPGRADE)){
 					SqlPerformScript(sch.Upgrade());
-				if(sch.ScriptChanged(SqlSchema::ATTRIBUTES)) {	
+				}	
+				if(sch.ScriptChanged(SqlSchema::ATTRIBUTES)){	
 					SqlPerformScript(sch.Attributes());
 				}
 				if(sch.ScriptChanged(SqlSchema::CONFIG)) {
