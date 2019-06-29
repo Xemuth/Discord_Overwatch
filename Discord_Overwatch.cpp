@@ -44,6 +44,7 @@ Discord_Overwatch::Discord_Overwatch(Upp::String _name, Upp::String _prefix){
 	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("removeright"))this->RemoveRight(e);});
 	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("crud"))this->GetCRUD(e);});
 	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("help"))this->Help(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("reloadcrud"))this->ReloadCRUD(e);});
 	
 }
 
@@ -61,6 +62,9 @@ void Discord_Overwatch::EventsMessageCreated(ValueMap payload){ //We admit BDD m
 
 void Discord_Overwatch::LoadMemoryCRUD(){
 	if(bddLoaded){
+		players.Clear();
+		equipes.Clear();
+		
 		Sql sql;
 		sql*Select(SqlAll()).From(OW_PLAYERS);
 		while(sql.Fetch()){
@@ -157,6 +161,10 @@ void Discord_Overwatch::prepareOrLoadBDD(){
 	}
 }
 
+void Discord_Overwatch::ReloadCRUD(ValueMap payload){
+	LoadMemoryCRUD();
+	ptrBot->CreateMessage(ChannelLastMessage,"Crud rechargé !");	
+}
 
 void Discord_Overwatch::executeSQL(ValueMap payload){
 	if(Message.GetCount() >7){
@@ -437,6 +445,7 @@ void Discord_Overwatch::Help(ValueMap payload){
 	help << "GiveRight(String DiscordName,String EquipeName)"<<" -> Vous permet de donner des droits pour administrer votre équipe.\n\n";
 	help << "RemoveRight(String DiscordName,String EquipeName)"<<" -> Vous permet de retirer les droits à un des administrateurs de l'équipe(sauf Admin).\n\n";
 	help << "Crud()"<<" -> Affiche le memory crud du programme.\n\n";
+	help << "ReloadCRUD()"<<" -> Recharge le memory crud du programme.\n\n";
 	help <<"```\n\n";
 	
 	ptrBot->CreateMessage(ChannelLastMessage,help);

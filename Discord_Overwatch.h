@@ -71,6 +71,7 @@ class Discord_Overwatch: public DiscordModule{
 		//READING Memory Func
 		
 		void GetCRUD(ValueMap payload);
+		void ReloadCRUD(ValueMap payload);
 		
 		void Help(ValueMap payload);
 		
