@@ -8,7 +8,9 @@ uses
 file
 	Discord_Overwatch.h,
 	Discord_Overwatch.cpp,
-	Overwatch_DataBase.sch;
+	Overwatch_DataBase.sch,
+	Overwatch_MemoryCrude.h,
+	Overwatch_MemoryCrude.cpp;
 
 mainconfig
 	"" = "";
