@@ -56,17 +56,20 @@ class Discord_Overwatch: public DiscordModule{
 		void GiveRight(ValueMap payload); //Allow equipe owner/ equipe righter to add person to the equipe
 		//!ow RemoveRight @NattyRoots Sombre est mon histoire
 		void RemoveRight(ValueMap payload); //Remove equipe righter to one personne By discord ID
-		
 		//!ow AddPerson @NattyRoots Sombre est mon histoire
 		void AddPersonToEquipe(ValueMap payload); //To add a person to an equipe you must have the right to add it
 		//!ow RemovePerson @NattyRoots Sombre est mon histoire
-		void RemovePersonToEquipe(ValueMap payload); //Remove Person from and equipe (only righter can do it)
-		
+		void RemovePersonToEquipe(ValueMap payload); //Remove Person from  equipe (only righter can do it)
+		//!ow RemoveMeFromEquipe Sombre est mon histoire
+		void RemoveMeFromEquipe(ValueMap payload); //Remove u from one of your equipe
 		//!ow upd
 		void ForceUpdate(ValueMap payload); //Force update, based on the personne who make the call
 		//!ow Eupd Sombre est mon histoire
-		void ForceEquipeUpdate(ValueMap payload); // Idk if only ppl who have right on equipe must do it or letting it free.
+		void ForceEquipeUpdate(ValueMap payload); //Idk if only ppl who have right on equipe must do it or letting it free.
+		//!ow DrawStatsEquipe rating Sombre est mon histoire
+		void DrawStatsEquipe(ValueMap payload); //Permet de déssiner le graph 
 		
+		bool UpdatePlayer(int playerId); //Function to call to update a player
 		void RetrieveData(); //USed to refresh all team 
 		//READING Memory Func
 		
@@ -88,7 +91,7 @@ class Discord_Overwatch: public DiscordModule{
 		bool DeletePlayerById(int ID);
 		bool DoUserIsCreatorOfTeam(int TeamId,int PlayerId);
 		bool DoUserIsAdminOfTeam(int TeamId,int PlayerId);
-	
+		bool DoUserIsStillOnTeam(int TeamId,int PlayerId);
 		
 		String PrintMemoryCrude();
 		//Miscealenous Func
