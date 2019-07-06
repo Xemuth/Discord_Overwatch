@@ -10,17 +10,17 @@
 */
 using namespace Upp;
 
-void   Player::SetPlayerId(int _playerID){if(isValide)player_ID = _playerID;}
-int    Player::GetPlayerId(){if(isValide)return player_ID;return -1;}
-void   Player::SetBattleTag(String _BattTetag){if(isValide)battle_tag =_BattTetag;}
-String Player::GetBattleTag(){if(isValide)return battle_tag;return "";}
-void   Player::SetDiscordId(String _DiscordId){if(isValide)discord_id=_DiscordId;}
-String Player::GetDiscordId(){if(isValide)return discord_id;return "";}
-void   Player::SetCommunName(String _CommunName){if(isValide)commun_name=_CommunName;}
-String Player::GetCommunName(){if(isValide)return commun_name;return "";}
+void   Player::SetPlayerId(int _playerID){if(IsValide())player_ID = _playerID;}
+int    Player::GetPlayerId(){if(IsValide())return player_ID;return -1;}
+void   Player::SetBattleTag(String _BattTetag){if(IsValide())battle_tag =_BattTetag;}
+String Player::GetBattleTag(){if(IsValide())return battle_tag;return "";}
+void   Player::SetDiscordId(String _DiscordId){if(IsValide())discord_id=_DiscordId;}
+String Player::GetDiscordId(){if(IsValide())return discord_id;return "";}
+void   Player::SetCommunName(String _CommunName){if(IsValide())commun_name=_CommunName;}
+String Player::GetCommunName(){if(IsValide())return commun_name;return "";}
 
-String Player::GetPersonneDiscordId(){if(isValide)return String() << "<@!" << player_ID << ">";return "";}
-bool Player::IsValide(){return isValide;}
+String Player::GetPersonneDiscordId(){if(IsValide())return String() << "<@!" << player_ID << ">";return "";}
+bool Player::IsValide(){return (player_ID!=-1)? true:false;}
 
 Player::Player(int _playerId,String _battleTag,String _discordId,String _communName){
 	if(_playerId > 0 && _battleTag.GetCount() > 0 && _discordId.GetCount() > 0){
@@ -28,7 +28,6 @@ Player::Player(int _playerId,String _battleTag,String _discordId,String _communN
 		battle_tag=_battleTag;
 		discord_id=_discordId;
 		commun_name=_communName;
-		isValide=true;
 	}
 }
 
@@ -38,18 +37,17 @@ void   Equipe::SetEquipeId(int _equipeId){equipe_id = _equipeId;}
 int    Equipe::GetEquipeId(){return equipe_id;}
 void   Equipe::SetEquipeName(String equipeName){equipe_name =equipeName;}
 String Equipe::GetEquipeName(){return equipe_name;}
-bool   Equipe::IsValide(){return isValide;}	
+bool   Equipe::IsValide(){return (equipe_id!=-1)? true:false;}	
 
 Equipe::Equipe(int _equipeId,String _equipeName){
 	if(_equipeId> 0 && _equipeName.GetCount()>0){
 		equipe_id=_equipeId;
 		equipe_name=_equipeName;
-		isValide=true;	
 	}
 }
 /////////////////////////////////////////////////////////////////
 int EquipeCreator::GetPlayerID(){return playerId;}
-bool     EquipeCreator::IsAdmin(){return isAdmin;}
+bool     EquipeCreator::IsAdmin(){return (playerId!=-1)? true:false;}
 
 EquipeCreator::EquipeCreator(int _playerId, bool _admin){
 	playerId=_playerId;
@@ -75,7 +73,7 @@ int   PlayerData::GetMedalsS(){return medals_silver;}
 void  PlayerData::SetMedalsS(int medalS){medals_silver = medalS;}
 int   PlayerData::GetMedalsG(){return medals_gold;}
 void  PlayerData::SetMedalsG(int medalG){medals_gold = medalG;}
-bool  PlayerData::IsValide(){return isValide;}
+bool  PlayerData::IsValide(){return (data_id!=-1)? true:false;}
 
 PlayerData::PlayerData(int _id,Date _date,int _gamesPlayed,int _level,int _rating,int _medalsC,int _medalsB,int _medalsS,int _medalsG){
 	if(_id>0){
@@ -88,7 +86,6 @@ PlayerData::PlayerData(int _id,Date _date,int _gamesPlayed,int _level,int _ratin
 		medals_bronze=_medalsB;
 		medals_silver=_medalsS;
 		medals_gold=-_medalsG;
-		isValide=true;
 	}
 }
 
@@ -103,6 +100,5 @@ PlayerData::PlayerData(int _id,int _gamesPlayed,int _level,int _rating,int _meda
 		medals_bronze=_medalsB;
 		medals_silver=_medalsS;
 		medals_gold=-_medalsG;
-		isValide=true;
 	}
 }	

@@ -23,7 +23,6 @@ class Player: Moveable<Player>{
 		String discord_id="";
 		String commun_name="";
 		
-		bool isValide = false;
 	public:
 		Vector<PlayerData> datas; // All The player DATA
 		
@@ -45,7 +44,6 @@ class Equipe: Moveable<Equipe>{
 	private:
 		int equipe_id=-1;
 		String equipe_name="";
-		bool isValide = false;
 
 	public:
 		Vector<int> playersId;  //players represent all ppl in equipe
@@ -64,7 +62,6 @@ class EquipeCreator: Moveable<EquipeCreator> {
 	private:
 		int playerId=-1;
 		bool isAdmin=false;
-		
 	public:
 		int GetPlayerID();
 		bool IsAdmin();
@@ -83,7 +80,6 @@ class PlayerData: Moveable<PlayerData> {
 		int medals_bronze=-1;
 		int medals_silver=-1;
 		int medals_gold=-1;
-		bool isValide=false;
 	public:
 		int GetDataId();
 		void SetDataId(int _dataId);
