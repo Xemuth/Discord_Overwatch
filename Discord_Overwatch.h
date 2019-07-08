@@ -2,6 +2,7 @@
 #define _Discord_Overwatch_Discord_Overwatch_h_
 #include <plugin/sqlite3/Sqlite3.h>
 #include <SmartUppBot/SmartBotUpp.h>
+#include <GraphBuilder/GraphBuilder.h>
 #include "Overwatch_MemoryCrude.h"
 using namespace Upp;
 
@@ -39,6 +40,8 @@ class Discord_Overwatch: public DiscordModule{
 		Vector<Equipe> equipes;
 		Vector<Player> players;
 
+		GraphDotCloud myGraph;
+
 		//Test
 		void getStats(ValueMap payload);
 		void executeSQL(ValueMap payload);
@@ -68,6 +71,8 @@ class Discord_Overwatch: public DiscordModule{
 		void ForceEquipeUpdate(ValueMap payload); //Idk if only ppl who have right on equipe must do it or letting it free.
 		//!ow DrawStatsEquipe rating Sombre est mon histoire
 		void DrawStatsEquipe(ValueMap payload); //Permet de déssiner le graph 
+		
+		void GraphProperties(ValueMap payload); //Allow you to define some property of the graph (if call without arg, just send Help)
 		
 		bool UpdatePlayer(int playerId); //Function to call to update a player
 		void RetrieveData(); //USed to refresh all team 

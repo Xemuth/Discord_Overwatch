@@ -28,7 +28,7 @@ at the end of Database loading function
 */
 
 
-Discord_Overwatch::Discord_Overwatch(Upp::String _name, Upp::String _prefix){
+Discord_Overwatch::Discord_Overwatch(Upp::String _name, Upp::String _prefix):myGraph(1920,1080){
 	name = _name;
 	prefix = _prefix;
 	
@@ -51,6 +51,8 @@ Discord_Overwatch::Discord_Overwatch(Upp::String _name, Upp::String _prefix){
 	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("upd"))this->ForceUpdate(e);});
 	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("eupd"))this->ForceEquipeUpdate(e);});
 	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("drawstatsequipe"))this->DrawStatsEquipe(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("graphproperties"))this->GraphProperties(e);});
+	
 }
 
 void Discord_Overwatch::EventsMessageCreated(ValueMap payload){ //We admit BDD must be loaded to be active
@@ -648,20 +650,10 @@ void Discord_Overwatch::DrawStatsEquipe(ValueMap payload){ //Permet de déssiner
 		}
 		MessageArgs[1] = ToLower(MessageArgs[1]);
 		if(MessageArgs[1].IsEqual("rating")){
-			GraphDotCloud myGraph(1920,1080,"Evolution du rank pour " + teamName , "Date", "Rank");
-			myGraph.ShowGraphName(false);
-			myGraph.ShowLegendsOfCourbes(true);
-			myGraph.ShowValueOfDot(true);
+			myGraph.SetGraphName("Evolution du rank pour " + teamName);
+			myGraph.DefineXName( "Date");
+			myGraph.DefineYName("Rating");
 			
-			//myGraph.ActivateMaxDatePadding(true);
-			//myGraph.SetMaxDatePadding(13);
-			/*
-			myGraph.SetActivatedSpecifiedLowestAxisY(true);
-			myGraph.SetSpecifiedLowestStartingNumberAxisY(2000);
-					
-			myGraph.SetActivatedSpecifiedHighestAxisY(true);
-			myGraph.SetSpecifiedHighestStartingNumberAxisY(8000);
-			*/
 			//newGraph.SetAlphaColor(Color(10,10,10));
 			//newGraph.SetMainColor(Blue());
 			Equipe* equipe = GetEquipeByName(teamName);
@@ -679,10 +671,10 @@ void Discord_Overwatch::DrawStatsEquipe(ValueMap payload){ //Permet de déssiner
 			PNGEncoder png;
 			png.SaveFile("temp.png", myGraph.DrawGraph());
 		}else if(MessageArgs[1].IsEqual("levels")){
-			GraphDotCloud myGraph(1920,1080,"Evolution du rank pour " + teamName , "Date", "Level");
-			myGraph.ShowGraphName(false);
-			myGraph.ShowLegendsOfCourbes(true);
-			myGraph.ShowValueOfDot(true);
+			myGraph.SetGraphName("Evolution des levels pour " + teamName);
+			myGraph.DefineXName( "Date");
+			myGraph.DefineYName("Level");
+
 			Equipe* equipe = GetEquipeByName(teamName);
 			int cpt = 0;
 			for(int& pid : equipe->playersId){
@@ -698,10 +690,10 @@ void Discord_Overwatch::DrawStatsEquipe(ValueMap payload){ //Permet de déssiner
 			PNGEncoder png;
 			png.SaveFile("temp.png", myGraph.DrawGraph());
 		}else if(MessageArgs[1].IsEqual("medals")){
-			GraphDotCloud myGraph(1920,1080,"Evolution du rank pour " + teamName , "Date", "medals");
-			myGraph.ShowGraphName(false);
-			myGraph.ShowLegendsOfCourbes(true);
-			myGraph.ShowValueOfDot(true);
+			myGraph.SetGraphName("Evolution des medailles pour " + teamName);
+			myGraph.DefineXName( "Date");
+			myGraph.DefineYName("medals");
+
 			Equipe* equipe = GetEquipeByName(teamName);
 			int cpt = 0;
 			for(int& pid : equipe->playersId){
@@ -717,10 +709,9 @@ void Discord_Overwatch::DrawStatsEquipe(ValueMap payload){ //Permet de déssiner
 			PNGEncoder png;
 			png.SaveFile("temp.png", myGraph.DrawGraph());
 		}else if(MessageArgs[1].IsEqual("games")){
-			GraphDotCloud myGraph(1920,1080,"Evolution du rank pour " + teamName , "Date", "Nombre de games");
-			myGraph.ShowGraphName(false);
-			myGraph.ShowLegendsOfCourbes(true);
-			myGraph.ShowValueOfDot(true);
+			myGraph.SetGraphName("Evolution du nombre de games pour " + teamName);
+			myGraph.DefineXName( "Date");
+			myGraph.DefineYName("Nombre de games");
 			Equipe* equipe = GetEquipeByName(teamName);
 			int cpt = 0;
 			for(int& pid : equipe->playersId){
@@ -740,6 +731,165 @@ void Discord_Overwatch::DrawStatsEquipe(ValueMap payload){ //Permet de déssiner
 	}
 }
 
+void Discord_Overwatch::GraphProperties(ValueMap payload){
+	if(	MessageArgs.GetCount() >1){
+		String message1 = ToLower(MessageArgs[1]);
+		if(MessageArgs.GetCount() ==3 && message1.IsEqual("showgraphname")){
+			Value v =ResolveType(MessageArgs[2]);
+			if(v.GetTypeName().IsEqual("boolean")){
+				bool vb = v.Get<bool>();
+				myGraph.ShowGraphName(vb);
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
+			}
+		}else if(MessageArgs.GetCount() ==3 && message1.IsEqual("showlegendsofcourbes")){
+			Value v =ResolveType(MessageArgs[2]);
+			if(v.GetTypeName().IsEqual("boolean")){
+				bool vb = v.Get<bool>();
+				myGraph.ShowLegendsOfCourbes(vb);
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
+			}
+		}else if(MessageArgs.GetCount() ==3 && message1.IsEqual("showvalueofdot")){
+			Value v =ResolveType(MessageArgs[2]);
+			if(v.GetTypeName().IsEqual("boolean")){
+				bool vb = v.Get<bool>();
+				myGraph.ShowValueOfDot(vb);
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
+			}
+		}else if(MessageArgs.GetCount() ==3 && message1.IsEqual("activatemaxdatepadding")){
+			Value v =ResolveType(MessageArgs[2]);
+			if(v.GetTypeName().IsEqual("boolean")){
+				bool vb = v.Get<bool>();
+				myGraph.ActivateMaxDatePadding(vb);
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
+			}
+		}else if(MessageArgs.GetCount() ==3 && message1.IsEqual("setmaxdatepadding")){
+			Value v =ResolveType(MessageArgs[2]);
+			if(v.GetTypeName().IsEqual("integer")){
+				int vi =v.Get<int>();
+				if(vi<0) vi =0;
+				myGraph.SetMaxDatePadding(vi);
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
+			}
+		}else if(MessageArgs.GetCount() ==3 && message1.IsEqual("setactivatedspecifiedlowestaxisy")){
+			Value v =ResolveType(MessageArgs[2]);
+			if(v.GetTypeName().IsEqual("boolean")){
+				bool vb = v.Get<bool>();
+				myGraph.SetSpecifiedLowestStartingNumberAxisY(vb);
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
+			}
+		}else if(MessageArgs.GetCount() ==3 && message1.IsEqual("setspecifiedloweststartingnumberaxisy")){
+			Value v =ResolveType(MessageArgs[2]);
+			if(v.GetTypeName().IsEqual("integer")){
+				int vi =v.Get<int>();
+				if(vi<0) vi =0;
+				myGraph.SetSpecifiedLowestStartingNumberAxisY(vi);
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
+			}
+		}else if(MessageArgs.GetCount() ==3 && message1.IsEqual("setactivatedspecifiedhighestaxisy")){
+			Value v =ResolveType(MessageArgs[2]);
+			if(v.GetTypeName().IsEqual("boolean")){
+				bool vb = v.Get<bool>();
+				myGraph.SetActivatedSpecifiedHighestAxisY(vb);
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
+			}
+		}else if(MessageArgs.GetCount() ==3 && message1.IsEqual("setspecifiedhigheststartingnumberaxisy")){
+			Value v =ResolveType(MessageArgs[2]);
+			if(v.GetTypeName().IsEqual("integer")){
+				int vi =v.Get<int>();
+				if(vi<0) vi =0;
+				myGraph.SetSpecifiedHighestStartingNumberAxisY(vi);
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
+			}
+		}else if(MessageArgs.GetCount() ==5 &&message1.IsEqual("setalphacolor")){
+			Value r =ResolveType(MessageArgs[2]);
+			Value g =ResolveType(MessageArgs[3]);
+			Value b =ResolveType(MessageArgs[4]);
+			if(r.GetTypeName().IsEqual("integer") && g.GetTypeName().IsEqual("integer") && b.GetTypeName().IsEqual("integer")){
+				int ri =r.Get<int>();
+				int gi =g.Get<int>();
+				int bi =b.Get<int>();
+				if(ri>255)r=255;
+				if(ri< 0) r=0;
+				if(gi>255)r=255;
+				if(gi< 0) r=0;
+				if(bi>255)r=255;
+				if(bi< 0) r=0;
+				myGraph.SetAlphaColor(Color(ri,gi,bi));
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
+			}
+		}else if(MessageArgs.GetCount() ==5 && message1.IsEqual("setmaincolor")){
+			Value r =ResolveType(MessageArgs[2]);
+			Value g =ResolveType(MessageArgs[3]);
+			Value b =ResolveType(MessageArgs[4]);
+			if(r.GetTypeName().IsEqual("integer") && g.GetTypeName().IsEqual("integer") && b.GetTypeName().IsEqual("integer")){
+				int ri =r.Get<int>();
+				int gi =g.Get<int>();
+				int bi =b.Get<int>();
+				if(ri>255)r=255;
+				if(ri< 0) r=0;
+				if(gi>255)r=255;
+				if(gi< 0) r=0;
+				if(bi>255)r=255;
+				if(bi< 0) r=0;
+				myGraph.SetMainColor(Color(ri,gi,bi));
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
+			}
+		}
+		else{
+			ptrBot->CreateMessage(ChannelLastMessage,"Proprieté invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
+		}
+	}else{
+		String help ="";
+		help << "```Aide pour les propriéter du graph :\n";
+		help << "Property: ShowGraphName || Value:True,False" <<" -> Définie si le nom du graph est affiché sur l'image.\n\n";
+		help << "Property: ShowLegendsOfCourbes || Value:True,False"<<" -> Définie si la légende du graph est affiché sur l'image.\n\n";
+		help << "Property: ShowValueOfDot || Value:True,False"<<" -> Définie si la valeur des points est affichées\n\n";
+		help << "Property: ActivateMaxDatePadding || Value:True,False"<<" -> Définie si le graph affiche un nombre maximal de date ou pas\n\n";
+		help << "Property: SetMaxDatePadding || Value:int>0"<<" -> Définie le nombre maximun de date à afficher par le graph.\n\n";
+		help << "Property: SetActivatedSpecifiedLowestAxisY || Value:True,False"<<" -> Définie si le graph est délimité par un nombre minimal.\n\n";
+		help << "Property: SetSpecifiedLowestStartingNumberAxisY || Value:int>0"<<" -> Définie le nombre minimun utilisée pour déléminité le graph.\n\n";
+		help << "Property: SetActivatedSpecifiedHighestAxisY || Value:True,False"<<" -> Définie si le graph est délimité par un nombre maximal.\n\n";
+		help << "Property: SetSpecifiedHighestStartingNumberAxisY || Value:int>0"<<" -> Définie le nombre maximun utilisée pour déléminité le graph.\n\n";
+		help << "Property: SetAlphaColor || Value:0<=int>=255,0<=int>=255,0<=int>=255"<<" ->Définie la couleur Alpha.\n\n";
+		help << "Property: SetMainColor || Value:0<=int>=255,0<=int>=255,0<=int>=255"<<" -> Définie la couleur principale du graph.\n\n";
+		help <<"```\n\n";
+		ptrBot->CreateMessage(ChannelLastMessage,help);
+	}
+	
+	
+
+	
+/*
+	myGraph.ShowGraphName(false);
+	myGraph.ShowLegendsOfCourbes(true);
+	myGraph.ShowValueOfDot(true);
+	
+	myGraph.ActivateMaxDatePadding(true);
+	myGraph.SetMaxDatePadding(13);
+	
+	myGraph.SetActivatedSpecifiedLowestAxisY(true);
+	myGraph.SetSpecifiedLowestStartingNumberAxisY(2000);
+			
+	myGraph.SetActivatedSpecifiedHighestAxisY(true);
+	myGraph.SetSpecifiedHighestStartingNumberAxisY(4000);
+	
+	newGraph.SetAlphaColor(Color(10,10,10));
+	newGraph.SetMainColor(Blue());
+	Equipe* equipe = GetEquipeByName(teamName);	*/
+}
+
+
 void Discord_Overwatch::Help(ValueMap payload){
 	String help ="";
 	help << "```Prefixe : !ow\n";
@@ -757,6 +907,7 @@ void Discord_Overwatch::Help(ValueMap payload){
 	help << "Upd()"<<" -> Mets à jours votre profile niveau stats.\n\n";
 	help << "Eupd(String EquipeName)"<<" -> Mets à jours toute l'équipe par rapport à l'Api(Vous devez être dans l'équipe.).\n\n";
 	help << "DrawStatsEquipe(String ValueToStatify,String EquipeName)"<<" -> Dessine un graph par rapport à la value à afficher (rating, levels, medals, games).\n\n";
+	help << "GraphProperties([String Property],[String Value])"<<" ->Definie les proprieté pour le graph, Si aucun arguments, renvoie l'aide sur les proprietées.\n\n";
 	help << "Crud()"<<" -> Affiche le memory crud du programme.\n\n";
 	help << "ReloadCRUD()"<<" -> Recharge le memory crud du programme.\n\n";
 	help <<"```\n\n";
