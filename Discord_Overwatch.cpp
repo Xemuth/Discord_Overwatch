@@ -734,9 +734,13 @@ void Discord_Overwatch::DrawStatsEquipe(ValueMap payload){ //Permet de déssiner
 void Discord_Overwatch::GraphProperties(ValueMap payload){
 	if(	MessageArgs.GetCount() >1){
 		String message1 = ToLower(MessageArgs[1]);
+		Value vF =ResolveType(MessageArgs[2]);
+		ptrBot->CreateMessage(ChannelLastMessage,"inheritance de type : " +vF.GetTypeName() );
+		
+		
 		if(MessageArgs.GetCount() ==3 && message1.IsEqual("showgraphname")){
 			Value v =ResolveType(MessageArgs[2]);
-			if(v.GetTypeName().IsEqual("boolean")){
+			if(v.GetTypeName().IsEqual("bool")){
 				bool vb = v.Get<bool>();
 				myGraph.ShowGraphName(vb);
 			}else{
@@ -744,7 +748,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 			}
 		}else if(MessageArgs.GetCount() ==3 && message1.IsEqual("showlegendsofcourbes")){
 			Value v =ResolveType(MessageArgs[2]);
-			if(v.GetTypeName().IsEqual("boolean")){
+			if(v.GetTypeName().IsEqual("bool")){
 				bool vb = v.Get<bool>();
 				myGraph.ShowLegendsOfCourbes(vb);
 			}else{
@@ -752,7 +756,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 			}
 		}else if(MessageArgs.GetCount() ==3 && message1.IsEqual("showvalueofdot")){
 			Value v =ResolveType(MessageArgs[2]);
-			if(v.GetTypeName().IsEqual("boolean")){
+			if(v.GetTypeName().IsEqual("bool")){
 				bool vb = v.Get<bool>();
 				myGraph.ShowValueOfDot(vb);
 			}else{
@@ -760,7 +764,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 			}
 		}else if(MessageArgs.GetCount() ==3 && message1.IsEqual("activatemaxdatepadding")){
 			Value v =ResolveType(MessageArgs[2]);
-			if(v.GetTypeName().IsEqual("boolean")){
+			if(v.GetTypeName().IsEqual("bool")){
 				bool vb = v.Get<bool>();
 				myGraph.ActivateMaxDatePadding(vb);
 			}else{
@@ -768,7 +772,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 			}
 		}else if(MessageArgs.GetCount() ==3 && message1.IsEqual("setmaxdatepadding")){
 			Value v =ResolveType(MessageArgs[2]);
-			if(v.GetTypeName().IsEqual("integer")){
+			if(v.GetTypeName().IsEqual("int")){
 				int vi =v.Get<int>();
 				if(vi<0) vi =0;
 				myGraph.SetMaxDatePadding(vi);
@@ -777,7 +781,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 			}
 		}else if(MessageArgs.GetCount() ==3 && message1.IsEqual("setactivatedspecifiedlowestaxisy")){
 			Value v =ResolveType(MessageArgs[2]);
-			if(v.GetTypeName().IsEqual("boolean")){
+			if(v.GetTypeName().IsEqual("bool")){
 				bool vb = v.Get<bool>();
 				myGraph.SetSpecifiedLowestStartingNumberAxisY(vb);
 			}else{
@@ -785,7 +789,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 			}
 		}else if(MessageArgs.GetCount() ==3 && message1.IsEqual("setspecifiedloweststartingnumberaxisy")){
 			Value v =ResolveType(MessageArgs[2]);
-			if(v.GetTypeName().IsEqual("integer")){
+			if(v.GetTypeName().IsEqual("int")){
 				int vi =v.Get<int>();
 				if(vi<0) vi =0;
 				myGraph.SetSpecifiedLowestStartingNumberAxisY(vi);
@@ -794,7 +798,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 			}
 		}else if(MessageArgs.GetCount() ==3 && message1.IsEqual("setactivatedspecifiedhighestaxisy")){
 			Value v =ResolveType(MessageArgs[2]);
-			if(v.GetTypeName().IsEqual("boolean")){
+			if(v.GetTypeName().IsEqual("bool")){
 				bool vb = v.Get<bool>();
 				myGraph.SetActivatedSpecifiedHighestAxisY(vb);
 			}else{
@@ -802,7 +806,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 			}
 		}else if(MessageArgs.GetCount() ==3 && message1.IsEqual("setspecifiedhigheststartingnumberaxisy")){
 			Value v =ResolveType(MessageArgs[2]);
-			if(v.GetTypeName().IsEqual("integer")){
+			if(v.GetTypeName().IsEqual("int")){
 				int vi =v.Get<int>();
 				if(vi<0) vi =0;
 				myGraph.SetSpecifiedHighestStartingNumberAxisY(vi);
@@ -813,7 +817,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 			Value r =ResolveType(MessageArgs[2]);
 			Value g =ResolveType(MessageArgs[3]);
 			Value b =ResolveType(MessageArgs[4]);
-			if(r.GetTypeName().IsEqual("integer") && g.GetTypeName().IsEqual("integer") && b.GetTypeName().IsEqual("integer")){
+			if(r.GetTypeName().IsEqual("int") && g.GetTypeName().IsEqual("int") && b.GetTypeName().IsEqual("int")){
 				int ri =r.Get<int>();
 				int gi =g.Get<int>();
 				int bi =b.Get<int>();
@@ -831,7 +835,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 			Value r =ResolveType(MessageArgs[2]);
 			Value g =ResolveType(MessageArgs[3]);
 			Value b =ResolveType(MessageArgs[4]);
-			if(r.GetTypeName().IsEqual("integer") && g.GetTypeName().IsEqual("integer") && b.GetTypeName().IsEqual("integer")){
+			if(r.GetTypeName().IsEqual("int") && g.GetTypeName().IsEqual("int") && b.GetTypeName().IsEqual("int")){
 				int ri =r.Get<int>();
 				int gi =g.Get<int>();
 				int bi =b.Get<int>();
