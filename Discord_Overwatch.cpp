@@ -816,7 +816,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 			Value v =ResolveType(MessageArgs[2]);
 			if(v.GetTypeName().IsEqual("bool")){
 				bool vb = v.Get<bool>();
-				myGraph.SetSpecifiedLowestStartingNumberAxisY(vb);
+				myGraph.SetActivatedSpecifiedLowestAxisY(vb);
 				isSuccess=true;
 			}else{
 				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
