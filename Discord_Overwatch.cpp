@@ -568,10 +568,14 @@ void Discord_Overwatch::RemoveMeFromEquipe(ValueMap payload){ //Remove u from on
 void Discord_Overwatch::ForceUpdate(ValueMap payload){ //Force update, based on the personne who make the call
 	if(IsRegestered(AuthorId)){
 		Player* player = GetPlayersFromDiscordId(AuthorId);
-		if(UpdatePlayer(player->GetPlayerId()))
-			ptrBot->CreateMessage(ChannelLastMessage,player->GetBattleTag() + " a été mis à jour !");
-		else 
-			ptrBot->CreateMessage(ChannelLastMessage,"Mise à jours impossible ! :(");
+		if(player != nullptr){
+			if(UpdatePlayer(player->GetPlayerId()))
+				ptrBot->CreateMessage(ChannelLastMessage,player->GetBattleTag() + " a été mis à jour !");
+			else 
+				ptrBot->CreateMessage(ChannelLastMessage,"Mise à jours impossible ! :(");
+		}else{
+			ptrBot->CreateMessage(ChannelLastMessage,"Le joueur n'existe pas -_-'");
+		}
 	}
 }
 
@@ -584,19 +588,22 @@ void Discord_Overwatch::ForceEquipeUpdate(ValueMap payload){ // Idk if only ppl 
 				if(e!=1 && e != MessageArgs.GetCount())teamName << " ";
 				teamName << MessageArgs[e];
 			}
-			
 			if(DoEquipeExist(teamName)){
 				auto* player = GetPlayersFromDiscordId(AuthorId);
 				auto* equipe = GetEquipeByName(teamName);
-				if(DoUserIsStillOnTeam(equipe->GetEquipeId(), player->GetPlayerId())){
-					bool result=true;
-					for(int& pid : equipe->playersId){
-						if(!UpdatePlayer(pid))
-							result=false;
+				if(player !=nullptr && equipe !=nullptr){
+					if(DoUserIsStillOnTeam(equipe->GetEquipeId(), player->GetPlayerId())){
+						bool result=true;
+						for(int& pid : equipe->playersId){
+							if(!UpdatePlayer(pid))
+								result=false;
+						}
+						ptrBot->CreateMessage(ChannelLastMessage,"Mise à jour de l'équipe terminée !!");
+					}else{
+						ptrBot->CreateMessage(ChannelLastMessage,"Vous n'êtes pas dans cette équipe !");
 					}
-					ptrBot->CreateMessage(ChannelLastMessage,"Mise à jour de l'équipe terminée !!");
 				}else{
-					ptrBot->CreateMessage(ChannelLastMessage,"Vous n'êtes pas dans cette équipe !");
+					ptrBot->CreateMessage(ChannelLastMessage,"Joueur introuvable !");
 				}
 			}else{
 				ptrBot->CreateMessage(ChannelLastMessage,"Team do not exist !");
@@ -611,33 +618,36 @@ void Discord_Overwatch::ForceEquipeUpdate(ValueMap payload){ // Idk if only ppl 
 
 bool Discord_Overwatch::UpdatePlayer(int playerId){
 	Player* player = GetPlayersFromId(playerId);
-	String bTag = player->GetBattleTag();
-	
-	HttpRequest reqApi;
-	bTag.Replace("#","-");
-	reqApi.Url("https://ow-api.com/v1/stats/pc/euw/" + bTag + "/profile");
-	reqApi.GET();
-	auto json = ParseJSON(reqApi.Execute());
-	if(!json["error"].ToString().IsEqual("Player not found")){
-		Date date = GetSysDate();
+	if(player != nullptr){
+		String bTag = player->GetBattleTag();
 		
-		Cout() << json["competitiveStats"]["games"]["played"].GetTypeName() <<"\n";
-		int gameP = json["competitiveStats"]["games"]["played"].Get<double>();
-		int level = (json["prestige"].Get<double>() *100) + json["level"].Get<double>();
-		int rating = json["rating"].Get<double>();
-		int medalC = json["competitiveStats"]["awards"]["medals"].Get<double>();
-		int medalB = json["competitiveStats"]["awards"]["medalsBronze"].Get<double>();
-		int medalS = json["competitiveStats"]["awards"]["medalsSilver"].Get<double>();
-		int medalG = json["competitiveStats"]["awards"]["medalsGold"].Get<double>();
-		Sql sql;
-		if(sql*Insert(OW_PLAYER_DATA)(DATA_PLAYER_ID,player->GetPlayerId())(RETRIEVE_DATE,date)(GAMES_PLAYED,gameP)(LEVEL,level)(RATING,rating)(MEDALS_COUNT,medalC)(MEDALS_BRONZE,medalB)(MEDALS_SILVER,medalS)(MEDALS_GOLD,medalG)){
-			player->datas.Add(PlayerData(sql.GetInsertedId().Get<int64>(),date,gameP,level,rating,medalC,medalB,medalS,medalG));
-			return true;
+		HttpRequest reqApi;
+		bTag.Replace("#","-");
+		reqApi.Url("https://ow-api.com/v1/stats/pc/euw/" + bTag + "/profile");
+		reqApi.GET();
+		auto json = ParseJSON(reqApi.Execute());
+		if(!json["error"].ToString().IsEqual("Player not found")){
+			Date date = GetSysDate();
+			Cout() << json["competitiveStats"]["games"]["played"].GetTypeName() <<"\n";
+			int gameP = json["competitiveStats"]["games"]["played"].Get<double>();
+			int level = (json["prestige"].Get<double>() *100) + json["level"].Get<double>();
+			int rating = json["rating"].Get<double>();
+			int medalC = json["competitiveStats"]["awards"]["medals"].Get<double>();
+			int medalB = json["competitiveStats"]["awards"]["medalsBronze"].Get<double>();
+			int medalS = json["competitiveStats"]["awards"]["medalsSilver"].Get<double>();
+			int medalG = json["competitiveStats"]["awards"]["medalsGold"].Get<double>();
+			Sql sql;
+			if(sql*Insert(OW_PLAYER_DATA)(DATA_PLAYER_ID,player->GetPlayerId())(RETRIEVE_DATE,date)(GAMES_PLAYED,gameP)(LEVEL,level)(RATING,rating)(MEDALS_COUNT,medalC)(MEDALS_BRONZE,medalB)(MEDALS_SILVER,medalS)(MEDALS_GOLD,medalG)){
+				player->datas.Add(PlayerData(sql.GetInsertedId().Get<int64>(),date,gameP,level,rating,medalC,medalB,medalS,medalG));
+				return true;
+			}
+			return false;
 		}
+		ptrBot->CreateMessage(ChannelLastMessage,player->GetBattleTag() + " est introuvable sur l'Api Overwatch !");
 		return false;
+	}else{
+		ptrBot->CreateMessage(ChannelLastMessage,+ "Ce joueur n'existe pas !");
 	}
-	ptrBot->CreateMessage(ChannelLastMessage,player->GetBattleTag() + " est introuvable sur l'Api Overwatch !");
-	return false;
 }
 
 //!ow DrawStatsEquipe rating Sombre est mon histoire
@@ -648,101 +658,120 @@ void Discord_Overwatch::DrawStatsEquipe(ValueMap payload){ //Permet de déssiner
 			if(e!=2 && e != MessageArgs.GetCount())teamName << " ";
 			teamName << MessageArgs[e];
 		}
+		myGraph.ClearData();
 		MessageArgs[1] = ToLower(MessageArgs[1]);
 		if(MessageArgs[1].IsEqual("rating")){
 			myGraph.SetGraphName("Evolution du rank pour " + teamName);
 			myGraph.DefineXName( "Date");
 			myGraph.DefineYName("Rating");
-			
-			//newGraph.SetAlphaColor(Color(10,10,10));
-			//newGraph.SetMainColor(Blue());
+
 			Equipe* equipe = GetEquipeByName(teamName);
-			int cpt = 0;
-			for(int& pid : equipe->playersId){
-				Player* atmP = GetPlayersFromId(pid);
-				String name = ((atmP->GetCommunName().GetCount()> 0)? atmP->GetCommunName():atmP->GetBattleTag());
-				myGraph.AddCourbe(Courbe(name,ValueTypeEnum::DATE, ValueTypeEnum::INT,AllColors[cpt]));
-				myGraph[cpt].ShowDot(true);
-				for(PlayerData& pd : atmP->datas){
-					myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetRating()),&myGraph[cpt]));
+			if(equipe != nullptr){
+				int cpt = 0;
+				for(int& pid : equipe->playersId){
+					Player* atmP = GetPlayersFromId(pid);
+					String name = ((atmP->GetCommunName().GetCount()> 0)? atmP->GetCommunName():atmP->GetBattleTag());
+					myGraph.AddCourbe(Courbe(name,ValueTypeEnum::DATE, ValueTypeEnum::INT,AllColors[cpt]));
+					myGraph[cpt].ShowDot(true);
+					for(PlayerData& pd : atmP->datas){
+						myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetRating()),&myGraph[cpt]));
+					}
+					cpt++;
 				}
-				cpt++;
+				PNGEncoder png;
+				png.SaveFile("temp.png", myGraph.DrawGraph());
+				ptrBot->SendFile(ChannelLastMessage,"Evolution du rank pour " + teamName,"","temp.png");
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"La team n'existe pas ! -_-'");
 			}
-			PNGEncoder png;
-			png.SaveFile("temp.png", myGraph.DrawGraph());
 		}else if(MessageArgs[1].IsEqual("levels")){
 			myGraph.SetGraphName("Evolution des levels pour " + teamName);
-			myGraph.DefineXName( "Date");
+			myGraph.DefineXName("Date");
 			myGraph.DefineYName("Level");
 
 			Equipe* equipe = GetEquipeByName(teamName);
-			int cpt = 0;
-			for(int& pid : equipe->playersId){
-				Player* atmP = GetPlayersFromId(pid);
-				String name = ((atmP->GetCommunName().GetCount()> 0)? atmP->GetCommunName():atmP->GetBattleTag());
-				myGraph.AddCourbe(Courbe(name,ValueTypeEnum::DATE, ValueTypeEnum::INT,AllColors[cpt]));
-				myGraph[cpt].ShowDot(true);
-				for(PlayerData& pd : atmP->datas){
-					myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetLevel()),&myGraph[cpt]));
+			if(equipe != nullptr){
+				int cpt = 0;
+				for(int& pid : equipe->playersId){
+					Player* atmP = GetPlayersFromId(pid);
+					String name = ((atmP->GetCommunName().GetCount()> 0)? atmP->GetCommunName():atmP->GetBattleTag());
+					myGraph.AddCourbe(Courbe(name,ValueTypeEnum::DATE, ValueTypeEnum::INT,AllColors[cpt]));
+					myGraph[cpt].ShowDot(true);
+					for(PlayerData& pd : atmP->datas){
+						myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetLevel()),&myGraph[cpt]));
+					}
+					cpt++;
 				}
-				cpt++;
+				PNGEncoder png;
+				png.SaveFile("temp.png", myGraph.DrawGraph());
+				ptrBot->SendFile(ChannelLastMessage,"Evolution des levels pour " + teamName,"","temp.png");
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"La team n'existe pas ! -_-'");
 			}
-			PNGEncoder png;
-			png.SaveFile("temp.png", myGraph.DrawGraph());
 		}else if(MessageArgs[1].IsEqual("medals")){
 			myGraph.SetGraphName("Evolution des medailles pour " + teamName);
 			myGraph.DefineXName( "Date");
 			myGraph.DefineYName("medals");
 
 			Equipe* equipe = GetEquipeByName(teamName);
-			int cpt = 0;
-			for(int& pid : equipe->playersId){
-				Player* atmP = GetPlayersFromId(pid);
-				String name = ((atmP->GetCommunName().GetCount()> 0)? atmP->GetCommunName():atmP->GetBattleTag());
-				myGraph.AddCourbe(Courbe(name,ValueTypeEnum::DATE, ValueTypeEnum::INT,AllColors[cpt]));
-				myGraph[cpt].ShowDot(true);
-				for(PlayerData& pd : atmP->datas){
-					myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetMedalsCount()),&myGraph[cpt]));
+			if(equipe != nullptr){
+				int cpt = 0;
+				for(int& pid : equipe->playersId){
+					Player* atmP = GetPlayersFromId(pid);
+					String name = ((atmP->GetCommunName().GetCount()> 0)? atmP->GetCommunName():atmP->GetBattleTag());
+					myGraph.AddCourbe(Courbe(name,ValueTypeEnum::DATE, ValueTypeEnum::INT,AllColors[cpt]));
+					myGraph[cpt].ShowDot(true);
+					for(PlayerData& pd : atmP->datas){
+						myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetMedalsCount()),&myGraph[cpt]));
+					}
+					cpt++;
 				}
-				cpt++;
+				PNGEncoder png;
+				png.SaveFile("temp.png", myGraph.DrawGraph());
+				ptrBot->SendFile(ChannelLastMessage,"Evolution des medailles pour " + teamName,"","temp.png");
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"La team n'existe pas ! -_-'");
 			}
-			PNGEncoder png;
-			png.SaveFile("temp.png", myGraph.DrawGraph());
 		}else if(MessageArgs[1].IsEqual("games")){
 			myGraph.SetGraphName("Evolution du nombre de games pour " + teamName);
 			myGraph.DefineXName( "Date");
 			myGraph.DefineYName("Nombre de games");
 			Equipe* equipe = GetEquipeByName(teamName);
-			int cpt = 0;
-			for(int& pid : equipe->playersId){
-				Player* atmP = GetPlayersFromId(pid);
-				String name = ((atmP->GetCommunName().GetCount()> 0)? atmP->GetCommunName():atmP->GetBattleTag());
-				myGraph.AddCourbe(Courbe(name,ValueTypeEnum::DATE, ValueTypeEnum::INT,AllColors[cpt]));
-				myGraph[cpt].ShowDot(true);
-				for(PlayerData& pd : atmP->datas){
-					myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetGamesPlayed()),&myGraph[cpt]));
+			if(equipe != nullptr){
+				int cpt = 0;
+				for(int& pid : equipe->playersId){
+					Player* atmP = GetPlayersFromId(pid);
+					String name = ((atmP->GetCommunName().GetCount()> 0)? atmP->GetCommunName():atmP->GetBattleTag());
+					myGraph.AddCourbe(Courbe(name,ValueTypeEnum::DATE, ValueTypeEnum::INT,AllColors[cpt]));
+					myGraph[cpt].ShowDot(true);
+					for(PlayerData& pd : atmP->datas){
+						myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetGamesPlayed()),&myGraph[cpt]));
+					}
+					cpt++;
 				}
-				cpt++;
+				PNGEncoder png;
+				png.SaveFile("temp.png", myGraph.DrawGraph());
+				ptrBot->SendFile(ChannelLastMessage,"Evolution du nombre de games pour " + teamName,"","temp.png");
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"La team n'existe pas ! -_-'");
 			}
-			PNGEncoder png;
-			png.SaveFile("temp.png", myGraph.DrawGraph());
 		}
-		ptrBot->SendFile(ChannelLastMessage,"Evolution du rank pour " + teamName,"","temp.png");
+		
 	}
 }
 
 void Discord_Overwatch::GraphProperties(ValueMap payload){
 	if(	MessageArgs.GetCount() >1){
+		bool isSuccess = false;
 		String message1 = ToLower(MessageArgs[1]);
 		Value vF =ResolveType(MessageArgs[2]);
-		ptrBot->CreateMessage(ChannelLastMessage,"inheritance de type : " +vF.GetTypeName() );
-		
-		
+		ptrBot->CreateMessage(ChannelLastMessage,"inheritance de type : " +vF.GetTypeName());
 		if(MessageArgs.GetCount() ==3 && message1.IsEqual("showgraphname")){
 			Value v =ResolveType(MessageArgs[2]);
 			if(v.GetTypeName().IsEqual("bool")){
 				bool vb = v.Get<bool>();
 				myGraph.ShowGraphName(vb);
+				isSuccess=true;
 			}else{
 				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
 			}
@@ -751,6 +780,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 			if(v.GetTypeName().IsEqual("bool")){
 				bool vb = v.Get<bool>();
 				myGraph.ShowLegendsOfCourbes(vb);
+				isSuccess=true;
 			}else{
 				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
 			}
@@ -759,6 +789,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 			if(v.GetTypeName().IsEqual("bool")){
 				bool vb = v.Get<bool>();
 				myGraph.ShowValueOfDot(vb);
+				isSuccess=true;
 			}else{
 				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
 			}
@@ -767,6 +798,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 			if(v.GetTypeName().IsEqual("bool")){
 				bool vb = v.Get<bool>();
 				myGraph.ActivateMaxDatePadding(vb);
+				isSuccess=true;
 			}else{
 				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
 			}
@@ -776,6 +808,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 				int vi =v.Get<int>();
 				if(vi<0) vi =0;
 				myGraph.SetMaxDatePadding(vi);
+				isSuccess=true;
 			}else{
 				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
 			}
@@ -784,6 +817,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 			if(v.GetTypeName().IsEqual("bool")){
 				bool vb = v.Get<bool>();
 				myGraph.SetSpecifiedLowestStartingNumberAxisY(vb);
+				isSuccess=true;
 			}else{
 				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
 			}
@@ -793,6 +827,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 				int vi =v.Get<int>();
 				if(vi<0) vi =0;
 				myGraph.SetSpecifiedLowestStartingNumberAxisY(vi);
+				isSuccess=true;
 			}else{
 				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
 			}
@@ -801,6 +836,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 			if(v.GetTypeName().IsEqual("bool")){
 				bool vb = v.Get<bool>();
 				myGraph.SetActivatedSpecifiedHighestAxisY(vb);
+				isSuccess=true;
 			}else{
 				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
 			}
@@ -810,6 +846,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 				int vi =v.Get<int>();
 				if(vi<0) vi =0;
 				myGraph.SetSpecifiedHighestStartingNumberAxisY(vi);
+				isSuccess=true;
 			}else{
 				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
 			}
@@ -828,6 +865,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 				if(bi>255)r=255;
 				if(bi< 0) r=0;
 				myGraph.SetAlphaColor(Color(ri,gi,bi));
+				isSuccess=true;
 			}else{
 				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
 			}
@@ -846,6 +884,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 				if(bi>255)r=255;
 				if(bi< 0) r=0;
 				myGraph.SetMainColor(Color(ri,gi,bi));
+				isSuccess=true;
 			}else{
 				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
 			}
@@ -853,6 +892,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 		else{
 			ptrBot->CreateMessage(ChannelLastMessage,"Proprieté invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
 		}
+		if(isSuccess) ptrBot->CreateMessage(ChannelLastMessage,"Succès !");
 	}else{
 		String help ="";
 		help << "```Aide pour les propriéter du graph :\n";
@@ -870,27 +910,6 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 		help <<"```\n\n";
 		ptrBot->CreateMessage(ChannelLastMessage,help);
 	}
-	
-	
-
-	
-/*
-	myGraph.ShowGraphName(false);
-	myGraph.ShowLegendsOfCourbes(true);
-	myGraph.ShowValueOfDot(true);
-	
-	myGraph.ActivateMaxDatePadding(true);
-	myGraph.SetMaxDatePadding(13);
-	
-	myGraph.SetActivatedSpecifiedLowestAxisY(true);
-	myGraph.SetSpecifiedLowestStartingNumberAxisY(2000);
-			
-	myGraph.SetActivatedSpecifiedHighestAxisY(true);
-	myGraph.SetSpecifiedHighestStartingNumberAxisY(4000);
-	
-	newGraph.SetAlphaColor(Color(10,10,10));
-	newGraph.SetMainColor(Blue());
-	Equipe* equipe = GetEquipeByName(teamName);	*/
 }
 
 
