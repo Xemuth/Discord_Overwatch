@@ -34,24 +34,24 @@ Discord_Overwatch::Discord_Overwatch(Upp::String _name, Upp::String _prefix):myG
 	
 	prepareOrLoadBDD();
 	LoadMemoryCRUD();
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount()>0 && MessageArgs[0].IsEqual("execsql"))this->executeSQL(e);ActionDone=true;});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount()>0 && MessageArgs[0].IsEqual("api"))this->testApi(e);ActionDone=true;});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount()>0 && MessageArgs[0].IsEqual("register"))this->Register(e);ActionDone=true;});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount()>0 && MessageArgs[0].IsEqual("remove"))this->DeleteProfil(e);ActionDone=true;});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount()>0 && MessageArgs[0].IsEqual("createequipe"))this->CreateEquipe(e);ActionDone=true;});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount()>0 && MessageArgs[0].IsEqual("removeequipe"))this->RemoveEquipe(e);ActionDone=true;});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount()>0 && MessageArgs[0].IsEqual("giveright"))this->GiveRight(e);ActionDone=true;});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount()>0 && MessageArgs[0].IsEqual("removeright"))this->RemoveRight(e);ActionDone=true;});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount()>0 && MessageArgs[0].IsEqual("crud"))this->GetCRUD(e);ActionDone=true;});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount()>0 && MessageArgs[0].IsEqual("help"))this->Help(e);ActionDone=true;});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount()>0 && MessageArgs[0].IsEqual("reloadcrud"))this->ReloadCRUD(e);ActionDone=true;});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount()>0 && MessageArgs[0].IsEqual("addtoequipe"))this->AddPersonToEquipe(e);ActionDone=true;});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount()>0 && MessageArgs[0].IsEqual("removefromequipe"))this->RemovePersonToEquipe(e);ActionDone=true;});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount()>0 && MessageArgs[0].IsEqual("removemefromequipe"))this->RemoveMeFromEquipe(e);ActionDone=true;});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount()>0 && MessageArgs[0].IsEqual("upd"))this->ForceUpdate(e);ActionDone=true;});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount()>0 && MessageArgs[0].IsEqual("eupd"))this->ForceEquipeUpdate(e);ActionDone=true;});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount()>0 && MessageArgs[0].IsEqual("drawstatsequipe"))this->DrawStatsEquipe(e);ActionDone=true;});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount()>0 && MessageArgs[0].IsEqual("graphproperties"))this->GraphProperties(e);ActionDone=true;});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("execsql"))this->executeSQL(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("api"))this->testApi(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("register"))this->Register(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("remove"))this->DeleteProfil(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("createequipe"))this->CreateEquipe(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("removeequipe"))this->RemoveEquipe(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("giveright"))this->GiveRight(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("removeright"))this->RemoveRight(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("crud"))this->GetCRUD(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("help"))this->Help(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("reloadcrud"))this->ReloadCRUD(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("addtoequipe"))this->AddPersonToEquipe(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("removefromequipe"))this->RemovePersonToEquipe(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("removemefromequipe"))this->RemoveMeFromEquipe(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("upd"))this->ForceUpdate(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("eupd"))this->ForceEquipeUpdate(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("drawstatsequipe"))this->DrawStatsEquipe(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("graphproperties"))this->GraphProperties(e);});
 	
 }
 
@@ -59,9 +59,6 @@ void Discord_Overwatch::EventsMessageCreated(ValueMap payload){ //We admit BDD m
 	for(auto &e : EventsMapMessageCreated){
 		if(bddLoaded){
 			e(payload);
-			if(ActionDone){
-				break;
-			}
 		}
 		else{ 
 			ptrBot->CreateMessage(ChannelLastMessage,"DataBase not loaded !"); 
