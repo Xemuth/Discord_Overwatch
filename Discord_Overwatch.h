@@ -35,7 +35,6 @@ at the end of Database loading function
 class Discord_Overwatch: public DiscordModule{
 	private:
 		bool bddLoaded = false;
-		bool ActionDone = false;
 		Sqlite3Session sqlite3; //DataBase
 
 		Vector<Equipe> equipes;
