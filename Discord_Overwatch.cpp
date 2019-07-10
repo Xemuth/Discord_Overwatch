@@ -34,24 +34,24 @@ Discord_Overwatch::Discord_Overwatch(Upp::String _name, Upp::String _prefix):myG
 	
 	prepareOrLoadBDD();
 	LoadMemoryCRUD();
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("execsql"))this->executeSQL(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("api"))this->testApi(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("register"))this->Register(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("remove"))this->DeleteProfil(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("createequipe"))this->CreateEquipe(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("removeequipe"))this->RemoveEquipe(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("giveright"))this->GiveRight(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("removeright"))this->RemoveRight(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("crud"))this->GetCRUD(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("help"))this->Help(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("reloadcrud"))this->ReloadCRUD(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("addtoequipe"))this->AddPersonToEquipe(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("removefromequipe"))this->RemovePersonToEquipe(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("removemefromequipe"))this->RemoveMeFromEquipe(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("upd"))this->ForceUpdate(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("eupd"))this->ForceEquipeUpdate(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("drawstatsequipe"))this->DrawStatsEquipe(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs[0].IsEqual("graphproperties"))this->GraphProperties(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("execsql"))this->executeSQL(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("api"))this->testApi(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("register"))this->Register(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("remove"))this->DeleteProfil(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("createequipe"))this->CreateEquipe(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("removeequipe"))this->RemoveEquipe(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("giveright"))this->GiveRight(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("removeright"))this->RemoveRight(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("crud"))this->GetCRUD(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("help"))this->Help(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("reloadcrud"))this->ReloadCRUD(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("addtoequipe"))this->AddPersonToEquipe(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("removefromequipe"))this->RemovePersonToEquipe(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("removemefromequipe"))this->RemoveMeFromEquipe(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("upd"))this->ForceUpdate(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("eupd"))this->ForceEquipeUpdate(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("drawstatsequipe"))this->DrawStatsEquipe(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("graphproperties"))this->GraphProperties(e);});
 	
 }
 
@@ -149,27 +149,25 @@ void Discord_Overwatch::prepareOrLoadBDD(){
 	if(!FileExists("Overwatch_DataBase.db"))mustCreate =true;
 	if(sqlite3.Open("Overwatch_DataBase.db")) {
 		SQL = sqlite3;
-		#ifdef _DEBUG
-			if(mustCreate){
-				SqlSchema sch(SQLITE3);
-				All_Tables(sch);
-				
-				if(sch.ScriptChanged(SqlSchema::UPGRADE)){
-					SqlPerformScript(sch.Upgrade());
-				}	
-				if(sch.ScriptChanged(SqlSchema::ATTRIBUTES)){	
-					SqlPerformScript(sch.Attributes());
-				}
-				if(sch.ScriptChanged(SqlSchema::CONFIG)) {
-					SqlPerformScript(sch.ConfigDrop());
-					SqlPerformScript(sch.Config());
-				}
-				sch.SaveNormal();
-				
+		if(mustCreate){
+			SqlSchema sch(SQLITE3);
+			All_Tables(sch);
+			
+			if(sch.ScriptChanged(SqlSchema::UPGRADE)){
+				SqlPerformScript(sch.Upgrade());
+			}	
+			if(sch.ScriptChanged(SqlSchema::ATTRIBUTES)){	
+				SqlPerformScript(sch.Attributes());
 			}
-			Sql sql;
-			sql.Execute("PRAGMA foreign_keys = ON;"); //Enable Foreign keys
-		#endif
+			if(sch.ScriptChanged(SqlSchema::CONFIG)) {
+				SqlPerformScript(sch.ConfigDrop());
+				SqlPerformScript(sch.Config());
+			}
+			sch.SaveNormal();
+			
+		}
+		Sql sql;
+		sql.Execute("PRAGMA foreign_keys = ON;"); //Enable Foreign keys
 		bddLoaded =true;
 	}
 }
@@ -765,7 +763,6 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 		bool isSuccess = false;
 		String message1 = ToLower(MessageArgs[1]);
 		Value vF =ResolveType(MessageArgs[2]);
-		ptrBot->CreateMessage(ChannelLastMessage,"inheritance de type : " +vF.GetTypeName());
 		if(MessageArgs.GetCount() ==3 && message1.IsEqual("showgraphname")){
 			Value v =ResolveType(MessageArgs[2]);
 			if(v.GetTypeName().IsEqual("bool")){
