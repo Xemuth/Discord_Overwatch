@@ -27,7 +27,6 @@ Also, do not forget to activate it at your first connection by using :
 at the end of Database loading function
 */
 
-
 Discord_Overwatch::Discord_Overwatch(Upp::String _name, Upp::String _prefix):myGraph(1920,1080){
 	name = _name;
 	prefix = _prefix;
@@ -672,8 +671,23 @@ void Discord_Overwatch::DrawStatsEquipe(ValueMap payload){ //Permet de déssiner
 					String name = ((atmP->GetCommunName().GetCount()> 0)? atmP->GetCommunName():atmP->GetBattleTag());
 					myGraph.AddCourbe(Courbe(name,ValueTypeEnum::DATE, ValueTypeEnum::INT,AllColors[cpt]));
 					myGraph[cpt].ShowDot(true);
+					Date lastDate;
+					int cpt2 =0;
 					for(PlayerData& pd : atmP->datas){
-						myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetRating()),&myGraph[cpt]));
+						//Ici le code est 'dégueu' en gros pour récup tj la last date de la
+						//journée, je boucle sur mes objets data contenant une date. Si l'objet
+						//data sur lequel je suis possède la même date que le précédent alors
+						//je delete le précédant et add celui-ci a la place. Je coderais plus
+						//proprement a l'occass //TODO
+						if(lastDate == pd.GetRetrieveDate()){
+							cpt2--;
+							myGraph[cpt].removeDot(cpt2);
+							myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetRating()),&myGraph[cpt]));
+						}else{
+							myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetRating()),&myGraph[cpt]));
+						}
+						lastDate = pd.GetRetrieveDate();
+						cpt2++;
 					}
 					cpt++;
 				}
