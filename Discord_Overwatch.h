@@ -1,9 +1,15 @@
 #ifndef _Discord_Overwatch_Discord_Overwatch_h_
 #define _Discord_Overwatch_Discord_Overwatch_h_
-#include <plugin/sqlite3/Sqlite3.h>
 #include <SmartUppBot/SmartBotUpp.h>
 #include <GraphBuilder/GraphBuilder.h>
 #include "Overwatch_MemoryCrude.h"
+
+
+#ifndef __Plugin_Sqlite3__
+	#include <plugin/sqlite3/Sqlite3.h>
+#endif
+
+
 using namespace Upp;
 
 #define SCHEMADIALECT <plugin/sqlite3/Sqlite3Schema.h>

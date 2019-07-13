@@ -645,6 +645,7 @@ bool Discord_Overwatch::UpdatePlayer(int playerId){
 		return false;
 	}else{
 		ptrBot->CreateMessage(ChannelLastMessage,+ "Ce joueur n'existe pas !");
+		return false;
 	}
 }
 
@@ -885,6 +886,24 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 			}else{
 				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
 			}
+		}else if(MessageArgs.GetCount() ==5 && message1.IsEqual("signit")){
+			Value v =ResolveType(MessageArgs[2]);
+			if(v.GetTypeName().IsEqual("bool")){
+				bool vb = v.Get<bool>();
+				myGraph.SignIt(vb);
+				isSuccess=true;
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
+			}
+		}else if(MessageArgs.GetCount() ==5 && message1.IsEqual("showvalueonaxis")){
+			Value v =ResolveType(MessageArgs[2]);
+			if(v.GetTypeName().IsEqual("bool")){
+				bool vb = v.Get<bool>();
+				myGraph.ShowValueOnAxis(vb);
+				isSuccess=true;
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
+			}
 		}
 		else{
 			ptrBot->CreateMessage(ChannelLastMessage,"Proprieté invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
@@ -896,6 +915,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 		help << "Property: ShowGraphName || Value:True,False" <<" -> Définie si le nom du graph est affiché sur l'image.\n\n";
 		help << "Property: ShowLegendsOfCourbes || Value:True,False"<<" -> Définie si la légende du graph est affiché sur l'image.\n\n";
 		help << "Property: ShowValueOfDot || Value:True,False"<<" -> Définie si la valeur des points est affichées\n\n";
+		help << "Property: ShowValueOnAxis || Value:True,False"<<" -> Définie si les valeurs apparaissent sur les Axis.\n\n";
 		help << "Property: ActivateMaxDatePadding || Value:True,False"<<" -> Définie si le graph affiche un nombre maximal de date ou pas\n\n";
 		help << "Property: SetMaxDatePadding || Value:int>0"<<" -> Définie le nombre maximun de date à afficher par le graph.\n\n";
 		help << "Property: SetActivatedSpecifiedLowestAxisY || Value:True,False"<<" -> Définie si le graph est délimité par un nombre minimal.\n\n";
@@ -904,6 +924,7 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 		help << "Property: SetSpecifiedHighestStartingNumberAxisY || Value:int>0"<<" -> Définie le nombre maximun utilisée pour déléminité le graph.\n\n";
 		help << "Property: SetAlphaColor || Value:0<=int>=255,0<=int>=255,0<=int>=255"<<" ->Définie la couleur Alpha.\n\n";
 		help << "Property: SetMainColor || Value:0<=int>=255,0<=int>=255,0<=int>=255"<<" -> Définie la couleur principale du graph.\n\n";
+		help << "Property: SignIt || Value:True,False"<<" -> Définie si le graph est signé ou non.\n\n";
 		help <<"```\n\n";
 		ptrBot->CreateMessage(ChannelLastMessage,help);
 	}
