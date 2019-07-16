@@ -51,6 +51,7 @@ Discord_Overwatch::Discord_Overwatch(Upp::String _name, Upp::String _prefix):myG
 	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("eupd"))this->ForceEquipeUpdate(e);});
 	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("drawstatsequipe"))this->DrawStatsEquipe(e);});
 	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("graphproperties"))this->GraphProperties(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e) {if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("chuck"))this->PrintFactsChuck(); });
 	
 }
 
@@ -645,6 +646,19 @@ bool Discord_Overwatch::UpdatePlayer(int playerId){
 	}else{
 		ptrBot->CreateMessage(ChannelLastMessage,+ "Ce joueur n'existe pas !");
 		return false;
+	}
+}
+
+//!ow chuck print chuck norris facts
+void Discord_Overwatch::PrintFactsChuck(){
+	HttpRequest reqApi;
+	repApi.Url("https://chucknorrisfacts.fr/api/get?data=nb:1;type:txt");
+	reqApi.Get();
+	auto json = ParseJSON(reqApi.Execute());
+	if(!json["fact"].ToString().IsEqual("")){
+		ptrBot->CreateMessage(ChannelLastMessage,+ json["fact"]);
+	} else {
+		ptrBot->CreateMessage(ChannelLastMessage,+ "C'est chuck qui décide...");
 	}
 }
 
