@@ -106,6 +106,7 @@ class Discord_Overwatch: public DiscordModule{
 		//Miscealenous Func
 		void LoadMemoryCRUD();
 		void prepareOrLoadBDD(); //Used to load BDD
+		void PrintFactsChuck();
 	public:
 		Discord_Overwatch(Upp::String _name, Upp::String _prefix);
 		void EventsMessageCreated(ValueMap payload);
