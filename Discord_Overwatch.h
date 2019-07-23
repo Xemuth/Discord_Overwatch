@@ -74,12 +74,21 @@ class Discord_Overwatch: public DiscordModule{
 		//!ow Eupd Sombre est mon histoire
 		void ForceEquipeUpdate(ValueMap payload); //Idk if only ppl who have right on equipe must do it or letting it free.
 		//!ow DrawStatsEquipe rating Sombre est mon histoire
-		void DrawStatsEquipe(ValueMap payload); //Permet de déssiner le graph 
+		
 		
 		void GraphProperties(ValueMap payload); //Allow you to define some property of the graph (if call without arg, just send Help)
 		
 		bool UpdatePlayer(int playerId); //Function to call to update a player
 		void RetrieveData(); //USed to refresh all team 
+		
+		#ifdef flagGRAPHBUILDER_DB //Flag must be define to activate all DB func
+		void DrawStatsEquipe(ValueMap payload); //Permet de déssiner le graph 
+		void saveActualGraph(ValueMap payload);
+		#endif
+		#ifndef flagGRAPHBUILDER_DB
+		void DrawStatsEquipe(ValueMap payload); //Permet de déssiner le graph 
+		#endif
+		
 		//READING Memory Func
 		
 		void GetCRUD(ValueMap payload);

@@ -49,7 +49,15 @@ Discord_Overwatch::Discord_Overwatch(Upp::String _name, Upp::String _prefix):myG
 	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("removemefromequipe"))this->RemoveMeFromEquipe(e);});
 	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("upd"))this->ForceUpdate(e);});
 	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("eupd"))this->ForceEquipeUpdate(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("drawstatsequipe"))this->DrawStatsEquipe(e);});
+	
+	
+	#ifdef flagGRAPHBUILDER_DB //Flag must be define to activate all DB func
+		EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("drawstatsequipe"))this->DrawStatsEquipe(e);});
+		EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("savegraphparam"))this->saveActualGraph(e);});
+	#endif
+	#ifndef flagGRAPHBUILDER_DB
+		EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("drawstatsequipe"))this->DrawStatsEquipe(e);}); 
+	#endif
 	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("graphproperties"))this->GraphProperties(e);});
 	
 }
@@ -180,10 +188,18 @@ void Discord_Overwatch::executeSQL(ValueMap payload){
 	if(Message.GetCount() >7){
 		if(bddLoaded){
 			Sql sql;
-			Message.Replace(String("ExecSQL "),"");
-			Message+=";";
-			if(Message.Find("SELECT")!=-1){
-				sql.Execute(Message);
+			String querry ="";
+			if(MessageArgs.GetCount()){
+				for(int e = 1; e < MessageArgs.GetCount();e++){
+					if(e==1)
+						querry << ToUpper(MessageArgs[e]);
+					else
+						querry << " " << MessageArgs[e];
+				}
+			}
+			querry << ";";
+			if(querry.Find("SELECT")!=-1){
+				sql.Execute(querry);
 				int cpt=0;
 				Upp::String result = "";
 				while(sql.Fetch()){
@@ -198,7 +214,7 @@ void Discord_Overwatch::executeSQL(ValueMap payload){
 				if(result.GetCount() == 0) result <<"No values";
 				ptrBot->CreateMessage(ChannelLastMessage,result);	
 			}else{
-				sql.Execute(Message);
+				sql.Execute(querry);
 				ptrBot->CreateMessage(ChannelLastMessage,sql.ToString());
 			}
 		}else{
@@ -208,7 +224,7 @@ void Discord_Overwatch::executeSQL(ValueMap payload){
 }
 
 void Discord_Overwatch::GetCRUD(ValueMap payload){
-	ptrBot->CreateMessage(ChannelLastMessage, PrintMemoryCrude() );	
+	ptrBot->CreateMessage(ChannelLastMessage, PrintMemoryCrude());	
 }
 
 void Discord_Overwatch::testApi(ValueMap payload){
@@ -218,9 +234,25 @@ void Discord_Overwatch::testApi(ValueMap payload){
 		reqApi.Url("https://ow-api.com/v1/stats/pc/euw/" + MessageArgs[1] + "/profile");
 		reqApi.GET();
 		auto json = ParseJSON(reqApi.Execute());
-		ptrBot->CreateMessage(ChannelLastMessage,json["rating"].ToString());
+		ptrBot->CreateMessage(ChannelLastMessage,"Rating de " +  MessageArgs[1] +": "+json["rating"].ToString());
 	}else{
-		ptrBot->CreateMessage(ChannelLastMessage,"Error url");
+		
+		if(IsRegestered(AuthorId)){
+			Player* p = GetPlayersFromDiscordId(AuthorId);
+			if(p){
+				HttpRequest reqApi;
+				String btag = p->GetBattleTag();
+				btag.Replace("#","-");
+				reqApi.Url("https://ow-api.com/v1/stats/pc/euw/" + btag + "/profile");
+				reqApi.GET();
+				auto json = ParseJSON(reqApi.Execute());
+				ptrBot->CreateMessage(ChannelLastMessage,"Rating de " + p->GetPersonneDiscordId() +": "+  json["rating"].ToString());
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"Erreur lors de la récupération... Ptr player indéfini");
+			}
+		}else{
+			ptrBot->CreateMessage(ChannelLastMessage,"Je ne vous connait pas ! Enrgistrer vous ou donné moi un BattleTag valide sous la forme suivante :\"Xemuth#2392\"" );
+		}
 	}
 }
 
@@ -648,7 +680,154 @@ bool Discord_Overwatch::UpdatePlayer(int playerId){
 	}
 }
 
-//!ow DrawStatsEquipe rating Sombre est mon histoire
+#ifdef flagGRAPHBUILDER_DB //Flag must be define to activate all DB func
+//!ow DrawStatsEquipe paramgraphproperties rating Sombre est mon histoire
+void Discord_Overwatch::DrawStatsEquipe(ValueMap payload){ //Permet de déssiner le graph 
+	if(MessageArgs.GetCount()>=3){
+		String teamName="";
+		int iterator = 2;
+		int e =2;
+		if(MessageArgs.GetCount() >3){
+			e= 2;
+			iterator=2;
+			MessageArgs[2].Replace("param","");
+			myGraph.LoadGraphParamFromBdd(MessageArgs[2]);
+			ptrBot->CreateMessage(ChannelLastMessage,"Chargement des paramètres reussi.");
+		}
+		for(;e < MessageArgs.GetCount(); e++){
+			if(e!=iterator && e != MessageArgs.GetCount())teamName << " ";
+			teamName << MessageArgs[e];
+		}
+		myGraph.ClearData();
+		MessageArgs[1] = ToLower(MessageArgs[1]);
+		if(MessageArgs[1].IsEqual("rating")){
+			myGraph.SetGraphName("Evolution du rank pour " + teamName);
+			myGraph.DefineXName( "Date");
+			myGraph.DefineYName("Rating");
+
+			Equipe* equipe = GetEquipeByName(teamName);
+			if(equipe != nullptr){
+				int cpt = 0;
+				for(int& pid : equipe->playersId){
+					Player* atmP = GetPlayersFromId(pid);
+					String name = ((atmP->GetCommunName().GetCount()> 0)? atmP->GetCommunName():atmP->GetBattleTag());
+					myGraph.AddCourbe(Courbe(name,ValueTypeEnum::DATE, ValueTypeEnum::INT,AllColors[cpt]));
+					myGraph[cpt].ShowDot(true);
+					Date lastDate;
+					int cpt2 =0;
+					for(PlayerData& pd : atmP->datas){
+						//Ici le code est 'dégueu' en gros pour récup tj la last date de la
+						//journée, je boucle sur mes objets data contenant une date. Si l'objet
+						//data sur lequel je suis possède la même date que le précédent alors
+						//je delete le précédant et add celui-ci a la place. Je coderais plus
+						//proprement a l'occass //TODO
+						if(lastDate == pd.GetRetrieveDate()){
+							cpt2--;
+							myGraph[cpt].removeDot(cpt2);
+							myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetRating()),&myGraph[cpt]));
+						}else{
+							myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetRating()),&myGraph[cpt]));
+						}
+						lastDate = pd.GetRetrieveDate();
+						cpt2++;
+					}
+					cpt++;
+				}
+				PNGEncoder png;
+				png.SaveFile("temp.png", myGraph.DrawGraph());
+				ptrBot->SendFile(ChannelLastMessage,"Evolution du rank pour " + teamName,"","temp.png");
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"La team n'existe pas ! -_-'");
+			}
+		}else if(MessageArgs[1].IsEqual("levels")){
+			myGraph.SetGraphName("Evolution des levels pour " + teamName);
+			myGraph.DefineXName("Date");
+			myGraph.DefineYName("Level");
+
+			Equipe* equipe = GetEquipeByName(teamName);
+			if(equipe != nullptr){
+				int cpt = 0;
+				for(int& pid : equipe->playersId){
+					Player* atmP = GetPlayersFromId(pid);
+					String name = ((atmP->GetCommunName().GetCount()> 0)? atmP->GetCommunName():atmP->GetBattleTag());
+					myGraph.AddCourbe(Courbe(name,ValueTypeEnum::DATE, ValueTypeEnum::INT,AllColors[cpt]));
+					myGraph[cpt].ShowDot(true);
+					for(PlayerData& pd : atmP->datas){
+						myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetLevel()),&myGraph[cpt]));
+					}
+					cpt++;
+				}
+				PNGEncoder png;
+				png.SaveFile("temp.png", myGraph.DrawGraph());
+				ptrBot->SendFile(ChannelLastMessage,"Evolution des levels pour " + teamName,"","temp.png");
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"La team n'existe pas ! -_-'");
+			}
+		}else if(MessageArgs[1].IsEqual("medals")){
+			myGraph.SetGraphName("Evolution des medailles pour " + teamName);
+			myGraph.DefineXName( "Date");
+			myGraph.DefineYName("medals");
+
+			Equipe* equipe = GetEquipeByName(teamName);
+			if(equipe != nullptr){
+				int cpt = 0;
+				for(int& pid : equipe->playersId){
+					Player* atmP = GetPlayersFromId(pid);
+					String name = ((atmP->GetCommunName().GetCount()> 0)? atmP->GetCommunName():atmP->GetBattleTag());
+					myGraph.AddCourbe(Courbe(name,ValueTypeEnum::DATE, ValueTypeEnum::INT,AllColors[cpt]));
+					myGraph[cpt].ShowDot(true);
+					for(PlayerData& pd : atmP->datas){
+						myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetMedalsCount()),&myGraph[cpt]));
+					}
+					cpt++;
+				}
+				PNGEncoder png;
+				png.SaveFile("temp.png", myGraph.DrawGraph());
+				ptrBot->SendFile(ChannelLastMessage,"Evolution des medailles pour " + teamName,"","temp.png");
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"La team n'existe pas ! -_-'");
+			}
+		}else if(MessageArgs[1].IsEqual("games")){
+			myGraph.SetGraphName("Evolution du nombre de games pour " + teamName);
+			myGraph.DefineXName( "Date");
+			myGraph.DefineYName("Nombre de games");
+			Equipe* equipe = GetEquipeByName(teamName);
+			if(equipe != nullptr){
+				int cpt = 0;
+				for(int& pid : equipe->playersId){
+					Player* atmP = GetPlayersFromId(pid);
+					String name = ((atmP->GetCommunName().GetCount()> 0)? atmP->GetCommunName():atmP->GetBattleTag());
+					myGraph.AddCourbe(Courbe(name,ValueTypeEnum::DATE, ValueTypeEnum::INT,AllColors[cpt]));
+					myGraph[cpt].ShowDot(true);
+					for(PlayerData& pd : atmP->datas){
+						myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetGamesPlayed()),&myGraph[cpt]));
+					}
+					cpt++;
+				}
+				PNGEncoder png;
+				png.SaveFile("temp.png", myGraph.DrawGraph());
+				ptrBot->SendFile(ChannelLastMessage,"Evolution du nombre de games pour " + teamName,"","temp.png");
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"La team n'existe pas ! -_-'");
+			}
+		}
+		
+	}
+}
+void Discord_Overwatch::saveActualGraph(ValueMap payload){
+	if(MessageArgs.GetCount() >=2){
+		if(myGraph.SaveGraphParamInBDD(MessageArgs[1])!=-1){
+			ptrBot->CreateMessage(ChannelLastMessage,"Paramètres sauvegardés.");	
+		}else{
+			ptrBot->CreateMessage(ChannelLastMessage,"Erreur lors de l'enregistrement des paramètres !");		
+		}
+	}else{
+		ptrBot->CreateMessage(ChannelLastMessage,"Veuillez préciser le nom de la configuration.");		
+	}
+}
+#endif
+#ifndef flagGRAPHBUILDER_DB
+		//!ow DrawStatsEquipe rating Sombre est mon histoire
 void Discord_Overwatch::DrawStatsEquipe(ValueMap payload){ //Permet de déssiner le graph 
 	if(MessageArgs.GetCount()>=3){
 		String teamName="";
@@ -772,6 +951,9 @@ void Discord_Overwatch::DrawStatsEquipe(ValueMap payload){ //Permet de déssiner
 		
 	}
 }
+#endif
+
+
 
 void Discord_Overwatch::GraphProperties(ValueMap payload){
 	if(	MessageArgs.GetCount() >1){
@@ -961,7 +1143,13 @@ void Discord_Overwatch::Help(ValueMap payload){
 	help << "RemoveMeFromEquipe(String EquipeName)"<<" -> Vous retire de l'équipe.\n\n";
 	help << "Upd()"<<" -> Mets à jours votre profile niveau stats.\n\n";
 	help << "Eupd(String EquipeName)"<<" -> Mets à jours toute l'équipe par rapport à l'Api(Vous devez être dans l'équipe.).\n\n";
+	#ifdef flagGRAPHBUILDER_DB
+	help << "DrawStatsEquipe(String ValueToStatify,String graphParameterName,String EquipeName)"<<" -> Dessine un graph par rapport à la value à afficher (rating, levels, medals, games) par rapport au paramètre charger(graphParameterName doit commencer par 'param' A CHANGER).\n\n";
+	help << "SaveGraphParam(String NameOfSavedParam)"<<" -> Sauvegarde les paramètres actuel en BDD, n'oubliez pas le nom du paramétrage !\n\n";
+	#endif
+	#ifndef flagGRAPHBUILDER_DB
 	help << "DrawStatsEquipe(String ValueToStatify,String EquipeName)"<<" -> Dessine un graph par rapport à la value à afficher (rating, levels, medals, games).\n\n";
+	#endif
 	help << "GraphProperties([String Property],[String Value])"<<" ->Definie les proprieté pour le graph, Si aucun arguments, renvoie l'aide sur les proprietées.\n\n";
 	help << "Crud()"<<" -> Affiche le memory crud du programme.\n\n";
 	help << "ReloadCRUD()"<<" -> Recharge le memory crud du programme.\n\n";
