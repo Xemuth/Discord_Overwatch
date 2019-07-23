@@ -970,8 +970,9 @@ void Discord_Overwatch::updateRating(ValueMap payload){
 					}else{
 						ptrBot->CreateMessage(ChannelLastMessage,"Erreur Insertion en BDD !");
 					}
+				}else{
+					ptrBot->CreateMessage(ChannelLastMessage,"Erreur inconnnue ! Pointeur indéfini");
 				}
-				ptrBot->CreateMessage(ChannelLastMessage,"Erreur inconnnue ! Pointeur indéfini");
 			}else{
 				ptrBot->CreateMessage(ChannelLastMessage,"L'argument n'est pas un chiffre !");
 			}
