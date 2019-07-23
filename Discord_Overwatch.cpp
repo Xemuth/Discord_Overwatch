@@ -49,7 +49,7 @@ Discord_Overwatch::Discord_Overwatch(Upp::String _name, Upp::String _prefix):myG
 	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("removemefromequipe"))this->RemoveMeFromEquipe(e);});
 	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("upd"))this->ForceUpdate(e);});
 	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("eupd"))this->ForceEquipeUpdate(e);});
-	
+	EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("upr"))this->updateRating(e);});
 	
 	#ifdef flagGRAPHBUILDER_DB //Flag must be define to activate all DB func
 		EventsMapMessageCreated.Add([&](ValueMap e){if(MessageArgs.GetCount() > 0 && MessageArgs[0].IsEqual("drawstatsequipe"))this->DrawStatsEquipe(e);});
@@ -953,6 +953,35 @@ void Discord_Overwatch::DrawStatsEquipe(ValueMap payload){ //Permet de déssiner
 }
 #endif
 
+void Discord_Overwatch::updateRating(ValueMap payload){
+	if(MessageArgs.GetCount() >= 2 ){
+		if(IsRegestered(AuthorId)){
+			if(isStringisANumber(MessageArgs[1])){
+				Player* player = GetPlayersFromDiscordId(AuthorId);
+				if(player != nullptr){
+					String bTag = player->GetBattleTag();
+					int Elo = std::stoi(MessageArgs[1].ToStd());
+					auto& buff =  player->datas[player->datas.GetCount()-1];
+					Date date = GetSysDate();
+					Sql sql;
+					if(sql*Insert(OW_PLAYER_DATA)(DATA_PLAYER_ID,player->GetPlayerId())(RETRIEVE_DATE,date)(GAMES_PLAYED,buff.GetGamesPlayed())(LEVEL,buff.GetLevel())(RATING,Elo)(MEDALS_COUNT,buff.GetMedalsCount())(MEDALS_BRONZE,buff.GetMedalsB())(MEDALS_SILVER,buff.GetMedalsS())(MEDALS_GOLD,buff.GetMedalsG())){
+						player->datas.Add(PlayerData(sql.GetInsertedId().Get<int64>(),date,buff.GetGamesPlayed(),buff.GetLevel(),Elo,buff.GetMedalsCount(),buff.GetMedalsB(),buff.GetMedalsS(),buff.GetMedalsG()));
+						ptrBot->CreateMessage(ChannelLastMessage,"Enregistrement effectué !");
+					}else{
+						ptrBot->CreateMessage(ChannelLastMessage,"Erreur Insertion en BDD !");
+					}
+				}
+				ptrBot->CreateMessage(ChannelLastMessage,"Erreur inconnnue ! Pointeur indéfini");
+			}else{
+				ptrBot->CreateMessage(ChannelLastMessage,"L'argument n'est pas un chiffre !");
+			}
+		}else{
+			ptrBot->CreateMessage(ChannelLastMessage,"Vous n'êtes pas enregistré !");
+		}
+	}else{
+		ptrBot->CreateMessage(ChannelLastMessage,"Pas asser d'arguments !");
+	}
+}
 
 
 void Discord_Overwatch::GraphProperties(ValueMap payload){
@@ -1151,6 +1180,7 @@ void Discord_Overwatch::Help(ValueMap payload){
 	help << "DrawStatsEquipe(String ValueToStatify,String EquipeName)"<<" -> Dessine un graph par rapport à la value à afficher (rating, levels, medals, games).\n\n";
 	#endif
 	help << "GraphProperties([String Property],[String Value])"<<" ->Definie les proprieté pour le graph, Si aucun arguments, renvoie l'aide sur les proprietées.\n\n";
+	help << "Upr(int rating)" <<" -> Update l'élo de la personne via le chiffre passé.\n\n";
 	help << "Crud()"<<" -> Affiche le memory crud du programme.\n\n";
 	help << "ReloadCRUD()"<<" -> Recharge le memory crud du programme.\n\n";
 	help <<"```\n\n";
