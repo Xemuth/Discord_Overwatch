@@ -19,7 +19,7 @@ String Player::GetDiscordId(){if(IsValide())return discord_id;return "";}
 void   Player::SetCommunName(String _CommunName){if(IsValide())commun_name=_CommunName;}
 String Player::GetCommunName(){if(IsValide())return commun_name;return "";}
 
-String Player::GetPersonneDiscordId(){if(IsValide())return String() << "<@!" << player_ID << ">";return "";}
+String Player::GetPersonneDiscordId(){if(IsValide())return String() << "<@!" << discord_id  << ">";return "";}
 bool Player::IsValide(){return (player_ID!=-1)? true:false;}
 
 Player::Player(int _playerId,String _battleTag,String _discordId,String _communName){
