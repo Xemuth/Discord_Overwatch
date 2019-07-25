@@ -4,13 +4,13 @@
 #include <GraphBuilder/GraphBuilder.h>
 #include "Overwatch_MemoryCrude.h"
 
+#define NOAPPSQL
 #include <plugin/sqlite3/Sqlite3.h>
 
 using namespace Upp;
 
-#undef SCHEMADIALECT
 #define SCHEMADIALECT <plugin/sqlite3/Sqlite3Schema.h>
-#undef MODEl
+
 #define MODEL <Discord_Overwatch/Overwatch_DataBase.sch>
 #include "Sql/sch_header.h"
 
@@ -39,12 +39,13 @@ at the end of Database loading function
 class Discord_Overwatch: public DiscordModule{
 	private:
 		bool bddLoaded = false;
+		GraphDotCloud myGraph;
 		Sqlite3Session sqlite3; //DataBase
 
 		Vector<Equipe> equipes;
 		Vector<Player> players;
 
-		GraphDotCloud myGraph;
+		
 
 		//Test
 		void getStats(ValueMap payload);
