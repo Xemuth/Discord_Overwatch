@@ -676,8 +676,10 @@ bool Discord_Overwatch::UpdatePlayer(int playerId){
 void Discord_Overwatch::DrawStatsEquipe(ValueMap payload){ //Permet de déssiner le graph 
 	if(MessageArgs.GetCount()>=2){
 		if(MessageArgs.GetCount() ==3){
-			myGraph.LoadGraphParamFromBdd(MessageArgs[2]);
-			ptrBot->CreateMessage(ChannelLastMessage,"Chargement des paramètres reussi.");
+			if(myGraph.LoadGraphParamFromBdd(MessageArgs[2]))
+				ptrBot->CreateMessage(ChannelLastMessage,"Chargement des paramètres reussi.");
+			else
+				ptrBot->CreateMessage(ChannelLastMessage,"Impossible de charger ces paramètres...");
 		}
 		myGraph.ClearData();
 		String teamName=MessageArgs[1];
