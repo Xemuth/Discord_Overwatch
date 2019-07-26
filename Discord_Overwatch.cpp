@@ -1171,7 +1171,7 @@ void Discord_Overwatch::Help(ValueMap payload){
 
 bool Discord_Overwatch::IsRegestered(String Id){
 	for(Player &p : players){
-		if(p.GetDiscordId().IsEqual(Id)){
+		if(TrimBoth(p.GetDiscordId()).IsEqual(TrimBoth(Id))){
 			return true;
 		}
 	}
@@ -1180,7 +1180,7 @@ bool Discord_Overwatch::IsRegestered(String Id){
 
 bool Discord_Overwatch::DoUserHaveRightOnTeam(String TeamName,String userId){
 	for(Equipe& eq : equipes){
-		if(eq.GetEquipeName().IsEqual(TeamName)){
+		if(TrimBoth(eq.GetEquipeName()).IsEqual(TrimBoth(TeamName))){
 			for(EquipeCreator& ec : eq.creators){
 				if(ec.GetPlayerID() == GetPlayersFromDiscordId(userId)->GetPlayerId()){
 					return true;
@@ -1193,7 +1193,7 @@ bool Discord_Overwatch::DoUserHaveRightOnTeam(String TeamName,String userId){
 }
 bool Discord_Overwatch::DoEquipeExist(String teamName){
 	for(Equipe& eq : equipes){
-		if(eq.GetEquipeName().IsEqual(teamName)){
+		if(TrimBoth(eq.GetEquipeName()).IsEqual(TrimBoth(teamName))){
 			return true;
 		}
 	}
@@ -1212,7 +1212,7 @@ Player* Discord_Overwatch::GetPlayersFromId(int Id){
 
 Player* Discord_Overwatch::GetPlayersFromDiscordId(String Id){
 	for(Player &p : players){
-		if(p.GetDiscordId().IsEqual(Id)){
+		if(TrimBoth(p.GetDiscordId()).IsEqual(TrimBoth(Id))){
 			return &p;
 		}
 	}
@@ -1230,7 +1230,7 @@ Equipe* Discord_Overwatch::GetEquipeById(int ID){
 
 Equipe* Discord_Overwatch::GetEquipeByName(String teamName){
 	for(Equipe& eq : equipes){
-		if(eq.GetEquipeName().IsEqual(teamName)){
+		if(TrimBoth(eq.GetEquipeName()).IsEqual(TrimBoth(teamName))){
 			return &eq;	
 		}
 	}
