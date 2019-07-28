@@ -54,6 +54,7 @@ Discord_Overwatch::Discord_Overwatch(Upp::String _name, Upp::String _prefix):myG
 	#ifdef flagGRAPHBUILDER_DB //Flag must be define to activate all DB func
 		EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("drawstatsequipe"))DrawStatsEquipe(e);});
 		EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("savegraphparam"))saveActualGraph(e);});
+		EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("drawstats"))DrawStatsPlayer();});
 	#endif
 	#ifndef flagGRAPHBUILDER_DB
 		EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("drawstatsequipe"))DrawStatsEquipe(e);}); 
@@ -810,8 +811,159 @@ void Discord_Overwatch::saveActualGraph(ValueMap payload){
 		ptrBot->CreateMessage(ChannelLastMessage,"Précise le nom de la conf STP```!ow SaveGraphParam(ma conf trop belle)```");		
 	}
 }
+//!ow DrawStatsPlayer(20,[@BASTION#21406]) I actually want 20 last elo change
+void Discord_Overwatch::DrawStatsPlayer(){
+	GraphDotCloud test(1920,1080);
+	int number = -1;
+	bool date =false;
+	Date d1;
+	Date d2;
+	Player* p = nullptr;
+	if(MessageArgs.GetCount() >=1 &&  isStringisANumber(MessageArgs[0])){
+		number = std::stoi(MessageArgs[0].ToStd());
+		if(MessageArgs.GetCount() >= 2){// Here I look if param is here
+			if(MessageArgs[1].Find("<@!") !=-1){
+				String id = Replace(MessageArgs[1],Vector<String>{"<",">","@","!"},Vector<String>{"","","",""});
+				if(IsRegestered(id)){
+					p= GetPlayersFromDiscordId(id);
+				}else{
+					ptrBot->CreateMessage(ChannelLastMessage,MessageArgs[1] + " n'est pas enregistré. Tapez ```!ow register(votreBtag,votre pseudo)```" );
+					return;	
+				}
+			}else{
+				if(test.LoadGraphParamFromBdd(MessageArgs[1])){
+					ptrBot->CreateMessage(ChannelLastMessage,"Chargement des paramètres reussi.");
+				}else{
+					ptrBot->CreateMessage(ChannelLastMessage,"Impossible de charger ces paramètres...");
+				}
+			}
+		}else{
+			p = GetPlayersFromDiscordId(AuthorId);	
+		}
+		if(MessageArgs.GetCount() >= 3){
+			if(MessageArgs[2].Find("<@!") !=-1){
+				String id = Replace(MessageArgs[2],Vector<String>{"<",">","@","!"},Vector<String>{"","","",""});
+				if(IsRegestered(id)){
+					p= GetPlayersFromDiscordId(id);
+				}else{
+					ptrBot->CreateMessage(ChannelLastMessage,MessageArgs[2] + " n'est pas enregistré. Tapez ```!ow register(votreBtag,votre pseudo)```" );
+					return;	
+				}
+			}else{
+				if(test.LoadGraphParamFromBdd(MessageArgs[2])){
+					ptrBot->CreateMessage(ChannelLastMessage,"Chargement des paramètres reussi.");
+				}else{
+					ptrBot->CreateMessage(ChannelLastMessage,"Impossible de charger ces paramètres...");
+				}
+			}
+		}else if(p == nullptr){
+			p = GetPlayersFromDiscordId(AuthorId);	
+		}
+	}else if(MessageArgs.GetCount() >=2 && MessageArgs[0].Find("/") !=-1 && MessageArgs[1].Find("/") !=-1){
+		date =true;
+		MessageArgs[0] = Replace(MessageArgs[0],Vector<String>{"\\","."," "},Vector<String>{"/","/","/"});
+		MessageArgs[1] = Replace(MessageArgs[1],Vector<String>{"\\","."," "},Vector<String>{"/","/","/"});
+		auto d = Split(MessageArgs[0],"/");
+		if(!isStringisANumber(d[0]) || !isStringisANumber(d[1]) || !isStringisANumber(d[2])){
+			ptrBot->CreateMessage(ChannelLastMessage,MessageArgs[0] + " n'est pas une Date valide." );
+			return;	
+		}
+		d1 =Date(std::stoi(d[2].ToStd()),std::stoi(d[1].ToStd()),std::stoi(d[0].ToStd()));
+		d = Split(MessageArgs[1],"/");
+		if(!isStringisANumber(d[0]) || !isStringisANumber(d[1]) || !isStringisANumber(d[2])){
+			ptrBot->CreateMessage(ChannelLastMessage,MessageArgs[1] + " n'est pas une Date valide." );
+			return;
+		}
+		d2 =Date(std::stoi(d[2].ToStd()),std::stoi(d[1].ToStd()),std::stoi(d[0].ToStd()));
+		if(MessageArgs.GetCount() >= 3){// Here I look if param is here
+			if(MessageArgs[2].Find("<@!") !=-1){
+				String id = Replace(MessageArgs[2],Vector<String>{"<",">","@","!"},Vector<String>{"","","",""});
+				if(IsRegestered(id)){
+					p= GetPlayersFromDiscordId(id);
+				}else{
+					ptrBot->CreateMessage(ChannelLastMessage,MessageArgs[2] + " n'est pas enregistré. Tapez ```!ow register(votreBtag,votre pseudo)```" );
+					return;	
+				}
+			}else{
+				if(test.LoadGraphParamFromBdd(MessageArgs[2])){
+					ptrBot->CreateMessage(ChannelLastMessage,"Chargement des paramètres reussi.");
+				}else{
+					ptrBot->CreateMessage(ChannelLastMessage,"Impossible de charger ces paramètres...");
+				}
+			}
+		}else{
+			p = GetPlayersFromDiscordId(AuthorId);	
+		}
+		if(MessageArgs.GetCount() >= 4){
+			if(MessageArgs[3].Find("<@!") !=-1){
+				String id = Replace(MessageArgs[3],Vector<String>{"<",">","@","!"},Vector<String>{"","","",""});
+				if(IsRegestered(id)){
+					p= GetPlayersFromDiscordId(id);
+				}else{
+					ptrBot->CreateMessage(ChannelLastMessage,MessageArgs[3] + " n'est pas enregistré. Tapez ```!ow register(votreBtag,votre pseudo)```" );
+					return;	
+				}
+			}else{
+				if(test.LoadGraphParamFromBdd(MessageArgs[3])){
+					ptrBot->CreateMessage(ChannelLastMessage,"Chargement des paramètres reussi.");
+				}else{
+					ptrBot->CreateMessage(ChannelLastMessage,"Impossible de charger ces paramètres...");
+				}
+			}
+		}else if(!p){
+			p = GetPlayersFromDiscordId(AuthorId);	
+		}
+	}else if(MessageArgs.GetCount()==0){
+		p = GetPlayersFromDiscordId(AuthorId);	
+	}
+	if(p){
+	
+		test.DefineXValueType(ValueTypeEnum::INT);
+		test.SetGraphName("Evolution du rating pour " + p->GetCommunName());
+		test.DefineXName( "Enregistrement");
+		test.DefineYName("Elo");
+		int cpt = 0;
+		test.AddCourbe(Courbe(p->GetCommunName(),ValueTypeEnum::INT,ValueTypeEnum::INT,test.GenerateColor()));
+		auto& r = test[0];
+		
+		r.ShowDot(true);
+		for(PlayerData& pd : p->datas){
+			if(number !=-1){
+				if((p->datas.GetCount() - cpt) <= number){
+					r.AddDot(Dot(Value(cpt),Value(pd.GetRating()),&r));
+					cpt++;
+				}else{
+					cpt++;	
+				}
+			}else if(date){
+				Cout() << d1 <<" || " <<  pd.GetRetrieveDate() <<"\n";
+				Cout() << d2 <<" || " <<  pd.GetRetrieveDate() <<"\n";
+				if(d1 <= pd.GetRetrieveDate() && d2 >= pd.GetRetrieveDate()){
+					r.AddDot(Dot(Value(cpt),Value(pd.GetRating()),&r));
+					cpt++;
+				}
+			}else{
+				r.AddDot(Dot(Value(cpt),Value(pd.GetRating()),&r));
+				cpt++;
+			}
+		}
+			
+		PNGEncoder png;
+		png.SaveFile("temp2.png", test.DrawGraph());
+		ptrBot->SendFile(ChannelLastMessage,"Evolution du rating pour " + p->GetCommunName(),"","temp2.png");
+	}
+	else{
+		ptrBot->CreateMessage(ChannelLastMessage,"Utilisateur introuvable en BDD.");	
+	}	
+}
+
 #endif
 #ifndef flagGRAPHBUILDER_DB
+//!ow DrawStatsPlayer(rating,[@BASTION#21406],20) I actually want 20 last elo change
+void Discord_Overwatch::DrawStatsPlayer(){
+	
+}
+
 //!ow DrawStatsEquipe(rating,Sombre est mon histoire)
 void Discord_Overwatch::DrawStatsEquipe(ValueMap payload){ //Permet de déssiner le graph 
 	if(MessageArgs.GetCount()==2){

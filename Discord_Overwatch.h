@@ -78,9 +78,11 @@ class Discord_Overwatch: public DiscordModule{
 		#ifdef flagGRAPHBUILDER_DB //Flag must be define to activate all DB func
 		void DrawStatsEquipe(ValueMap payload); //Permet de déssiner le graph 
 		void saveActualGraph(ValueMap payload);
+		void DrawStatsPlayer();
 		#endif
 		#ifndef flagGRAPHBUILDER_DB
 		void DrawStatsEquipe(ValueMap payload); //Permet de déssiner le graph 
+		void DrawStatsPlayer();
 		#endif
 		//Force la mise a jour de la personne (elle doit spécifier son elo)
 		void updateRating(ValueMap payload);
