@@ -1326,7 +1326,7 @@ void Discord_Overwatch::startThread(){
 										if(!threadStarted) break;
 										UpdatePlayer(p.GetPlayerId());
 									}	
-									Cout() << "Update complete"<<"\n";
+									ptrBot->CreateMessage(ChannelLastMessage,"Mise à jour en terminée !");
 								}
 								Cout() << "fin du thread"<<"\n";
 								return;});
