@@ -93,6 +93,13 @@ class Discord_Overwatch: public DiscordModule{
 		bool UpdatePlayer(int playerId); //Function to call to update a player
 		void RetrieveData(); //USed to refresh all team 
 		
+		//Used to launch and stop thread used for auto update
+		Thread autoUpdate;
+		bool threadStarted =false;
+		bool GetEtatThread();
+		
+		void startThread();
+		void stopThread();	
 	
 		//READING Memory Func
 		

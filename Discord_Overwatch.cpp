@@ -33,6 +33,7 @@ Discord_Overwatch::Discord_Overwatch(Upp::String _name, Upp::String _prefix):myG
 	
 	prepareOrLoadBDD();
 	LoadMemoryCRUD();
+	
 	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("execsql"))executeSQL(e);});
 	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("api"))testApi(e);});
 	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("register"))Register(e);});
@@ -59,7 +60,9 @@ Discord_Overwatch::Discord_Overwatch(Upp::String _name, Upp::String _prefix):myG
 	#ifndef flagGRAPHBUILDER_DB
 		EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("drawstatsequipe"))DrawStatsEquipe(e);}); 
 	#endif
-	
+	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("startautoupdate"))startThread();});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("stopautoupdate"))stopThread();});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("autoupdate"))GetEtatThread();});
 	
 }
 
@@ -936,8 +939,6 @@ void Discord_Overwatch::DrawStatsPlayer(){
 					cpt++;	
 				}
 			}else if(date){
-				Cout() << d1 <<" || " <<  pd.GetRetrieveDate() <<"\n";
-				Cout() << d2 <<" || " <<  pd.GetRetrieveDate() <<"\n";
 				if(d1 <= pd.GetRetrieveDate() && d2 >= pd.GetRetrieveDate()){
 					r.AddDot(Dot(Value(cpt),Value(pd.GetRating()),&r));
 					cpt++;
@@ -1287,6 +1288,57 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 		help << "!ow graphProperties(SignIt, True||False)"<<" -> Définie si le graph est signé ou non.\n\n";
 		help <<"```\n\n";
 		ptrBot->CreateMessage(ChannelLastMessage,help);
+	}
+}
+
+bool Discord_Overwatch::GetEtatThread(){//used to return if thread is start or stopped
+	if(MessageArgs.GetCount()==0){
+		if(autoUpdate.IsOpen()){
+			ptrBot->CreateMessage(ChannelLastMessage,"Actuellement, l'autoUpdater est lancé !");	
+		}else{
+			ptrBot->CreateMessage(ChannelLastMessage,"Actuellement, l'autoUpdater est coupé !");	
+		}
+	}else{
+		ptrBot->CreateMessage(ChannelLastMessage,"Erreur d'arguments !```!ow AutoUpdate()```");	
+	}
+}
+void Discord_Overwatch::startThread(){
+	if(MessageArgs.GetCount()==0){
+		if(autoUpdate.IsOpen()){
+			ptrBot->CreateMessage(ChannelLastMessage,"L'autoUpdated est déjà lancé !");	
+		}else{
+			autoUpdate.Run([&](){threadStarted =true;for(;;){
+
+									for(int e = 0; e < 3600 ; e++){
+										if(!threadStarted) break;
+										Sleep(1000);
+									}
+									if(!threadStarted) break;
+									for(Player &p : players){
+										if(!threadStarted) break;
+										UpdatePlayer(p.GetPlayerId());
+									}	
+									Cout() << "Update complete"<<"\n";
+								}
+								Cout() << "fin du thread"<<"\n";
+								return;});
+			ptrBot->CreateMessage(ChannelLastMessage,"L'autoUpdated est désormait lancé !");
+		}
+	}else{
+		ptrBot->CreateMessage(ChannelLastMessage,"Erreur d'arguments !```!ow startAutoUpdate()```");	
+	}
+}
+void Discord_Overwatch::stopThread(){
+	if(MessageArgs.GetCount()==0){
+		if(autoUpdate.IsOpen()){
+			threadStarted=false;
+			autoUpdate.Wait();
+			ptrBot->CreateMessage(ChannelLastMessage,"L'autoUpdated est désormait coupé !");	
+		}else{
+			ptrBot->CreateMessage(ChannelLastMessage,"L'autoUpdated n'est pas lancé !");	
+		}
+	}else{
+		ptrBot->CreateMessage(ChannelLastMessage,"Erreur d'arguments !```!ow stopAutoUpdate()```");	
 	}
 }
 
