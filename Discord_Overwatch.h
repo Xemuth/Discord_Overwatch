@@ -96,6 +96,7 @@ class Discord_Overwatch: public DiscordModule{
 		//Used to launch and stop thread used for auto update
 		Thread autoUpdate;
 		bool threadStarted =false;
+		bool HowManyTimeBeforeUpdate= false;
 		bool GetEtatThread();
 		
 		void startThread();

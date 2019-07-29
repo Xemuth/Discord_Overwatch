@@ -1294,14 +1294,18 @@ void Discord_Overwatch::GraphProperties(ValueMap payload){
 bool Discord_Overwatch::GetEtatThread(){//used to return if thread is start or stopped
 	if(MessageArgs.GetCount()==0){
 		if(autoUpdate.IsOpen()){
+			HowManyTimeBeforeUpdate =true;
 			ptrBot->CreateMessage(ChannelLastMessage,"Actuellement, l'autoUpdater est lancé !");	
 		}else{
 			ptrBot->CreateMessage(ChannelLastMessage,"Actuellement, l'autoUpdater est coupé !");	
 		}
+		return true;
 	}else{
 		ptrBot->CreateMessage(ChannelLastMessage,"Erreur d'arguments !```!ow AutoUpdate()```");	
+		return false;
 	}
 }
+
 void Discord_Overwatch::startThread(){
 	if(MessageArgs.GetCount()==0){
 		if(autoUpdate.IsOpen()){
@@ -1311,6 +1315,10 @@ void Discord_Overwatch::startThread(){
 
 									for(int e = 0; e < 3600 ; e++){
 										if(!threadStarted) break;
+										if(HowManyTimeBeforeUpdate){ 
+											ptrBot->CreateMessage(ChannelLastMessage,"Prochaine mise à jours dans : "+ AsString((3600-e)/60)+"min");	
+											HowManyTimeBeforeUpdate=false;
+										}
 										Sleep(1000);
 									}
 									if(!threadStarted) break;
