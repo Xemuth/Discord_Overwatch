@@ -127,6 +127,8 @@ class Discord_Overwatch: public DiscordModule{
 		void LoadMemoryCRUD();
 		void prepareOrLoadBDD(); //Used to load BDD
 	public:
+		
+		virtual String Credit(ValueMap json,bool sendCredit = true);
 		Discord_Overwatch(Upp::String _name, Upp::String _prefix);
 		void EventsMessageCreated(ValueMap payload);
 };

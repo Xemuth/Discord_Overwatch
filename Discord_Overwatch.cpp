@@ -1354,7 +1354,7 @@ void Discord_Overwatch::Help(ValueMap payload){
 	String help ="";
 	int pageNumber = 2;
 		help << "```";
-		help << "Commandes module discord page No "  << 1  << "/" << pageNumber << "\n";
+		help << "Commandes module discord page OverWatch No "  << 1  << "/" << pageNumber << "\n";
 		help << "!ow ExecSQL(SqlToExecute)" <<" -> Execute du SQL passé en paramètre.\n\n";
 		help << "!ow Api(BattleTag)"<<" -> Récupère le Rank, depuis l'api OverWatch, du BattleTag passé en paramètre.\n\n";
 		help << "!ow Register(BattleTag,Pseudo)"<<" -> Enregistre votre identité auprès du bot(Necessaire pour toutes les commandes en liaison avec les équipes.\n\n";
@@ -1378,7 +1378,7 @@ void Discord_Overwatch::Help(ValueMap payload){
 				case 2:	
 					help ="";
 					help << "```";
-					help << "Commandes module discord page No "  << 2  << "/" << pageNumber << "\n";
+					help << "Commandes module discord OverWatch page No "  << 2  << "/" << pageNumber << "\n";
 					help << "!ow Upd()"<<" -> Mets à jours votre profile niveau stats.\n\n";
 					help << "!ow Eupd(EquipeName)"<<" -> Mets à jours toute l'équipe par rapport à l'Api(Vous devez être dans l'équipe.).\n\n";
 					#ifdef flagGRAPHBUILDER_DB
@@ -1391,12 +1391,22 @@ void Discord_Overwatch::Help(ValueMap payload){
 					help << "!ow GraphProperties(Property,Value)"<<" ->Definie les proprieté pour le graph, Si aucun arguments.\n\n";
 					help << "!ow GraphProperties()"<<" ->renvoie l'aide sur les proprietées.\n\n";
 					help << "!ow Upr(rating)" <<" -> Update l'élo de la personne via le chiffre passé.\n\n";
+					help << "!ow credit()" <<" -> Affiche les crédit du module Overwatch.\n\n";
 					help <<"```";
 				break;
 			}
 		}
 		BotPtr->CreateMessage(ChannelLastMessage,help);
 	}
+}
+
+String Discord_Overwatch::Credit(ValueMap json,bool sendCredit){
+	String credit =  "----OverWatch Module have been made By Clément Hamon---\n";
+	credit << "-----------https://github.com/Xemuth-----------\n";
+	credit << "Overwatch module is used to track stats of various player on Overwatch\nIt track elo's evolution, medals, wins and provide graphical view of the progression\nThis module use GraphBuilder, a package used to draw graph dynamically\n";
+	credit << "https://github.com/Xemuth/Discord_Overwatch\nhttps://github.com/Xemuth/GraphBuilder";
+	if(sendCredit) BotPtr->CreateMessage(ChannelLastMessage,"```"+credit +"```");
+	return credit;
 }
 
 bool Discord_Overwatch::IsRegestered(String Id){
