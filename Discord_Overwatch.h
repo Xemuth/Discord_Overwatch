@@ -42,10 +42,8 @@ class Discord_Overwatch: public DiscordModule{
 		GraphDotCloud myGraph;
 		Sqlite3Session sqlite3; //DataBase
 
-		Vector<Equipe> equipes;
-		Vector<Player> players;
-
-		
+		Array<Equipe> equipes;
+		Array<Player> players;
 
 		//Test
 		void getStats(ValueMap payload);
