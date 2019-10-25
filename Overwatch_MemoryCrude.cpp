@@ -65,6 +65,13 @@ int   PlayerData::GetLevel(){return level;}
 void  PlayerData::SetLevel(int _level){level = _level;}
 int   PlayerData::GetRating(){return rating;}
 void  PlayerData::SetRating(int rate){rating = rate;}
+int PlayerData::GetRatingDamage(){return rating_damage;}
+void PlayerData::SetRatingDamage(int rate){rating_damage=rate;}
+int PlayerData::GetRatingHeal(){return rating_heal;}
+void PlayerData::SetRatingHeal(int rate){rating_heal=rate;}
+int PlayerData::GetRatingTank(){return rating_tank;}
+void PlayerData::SetRatingTank(int rate){rating_tank=rate;}
+
 int   PlayerData::GetMedalsCount(){return medals_count;}
 void  PlayerData::SetMedalsCount(int medalsC){medals_count = medalsC;}
 int   PlayerData::GetMedalsB(){return medals_bronze;}
@@ -75,13 +82,16 @@ int   PlayerData::GetMedalsG(){return medals_gold;}
 void  PlayerData::SetMedalsG(int medalG){medals_gold = medalG;}
 bool  PlayerData::IsValide(){return (data_id!=-1)? true:false;}
 
-PlayerData::PlayerData(int _id,Date _date,int _gamesPlayed,int _level,int _rating,int _medalsC,int _medalsB,int _medalsS,int _medalsG){
+PlayerData::PlayerData(int _id,Date _date,int _gamesPlayed,int _level,int _rating,int _rating_damage,int _rating_tank ,int _rating_heal,int _medalsC,int _medalsB,int _medalsS,int _medalsG){
 	if(_id>0){
 		data_id=_id;
 		retrieve_date= _date;
 		games_played=_gamesPlayed;
 		level=_level;
 		rating=_rating;
+		rating_damage = _rating_damage;
+		rating_tank= _rating_tank;
+		rating_heal= _rating_heal;
 		medals_count=_medalsC;
 		medals_bronze=_medalsB;
 		medals_silver=_medalsS;
@@ -89,13 +99,16 @@ PlayerData::PlayerData(int _id,Date _date,int _gamesPlayed,int _level,int _ratin
 	}
 }
 
-PlayerData::PlayerData(int _id,int _gamesPlayed,int _level,int _rating,int _medalsC,int _medalsB,int _medalsS,int _medalsG){
+PlayerData::PlayerData(int _id,int _gamesPlayed,int _level,int _rating,int _rating_damage,int _rating_heal,int _rating_tank,int _medalsC,int _medalsB,int _medalsS,int _medalsG){
 	if(_id>0){
 		data_id=_id;
 		retrieve_date=GetSysDate();
 		games_played=_gamesPlayed;
 		level=_level;
 		rating=_rating;
+		rating_damage = _rating_damage;
+		rating_tank= _rating_tank;
+		rating_heal= _rating_heal;
 		medals_count=_medalsC;
 		medals_bronze=_medalsB;
 		medals_silver=_medalsS;

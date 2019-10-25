@@ -75,7 +75,12 @@ class PlayerData: Moveable<PlayerData> {
 		Date retrieve_date= Date();
 		int games_played=-1;
 		int level=-1;
+		
 		int rating=-1;
+		int rating_damage=-1;
+		int rating_heal=-1;
+		int rating_tank=-1;
+
 		int medals_count=-1;
 		int medals_bronze=-1;
 		int medals_silver=-1;
@@ -91,6 +96,15 @@ class PlayerData: Moveable<PlayerData> {
 		void SetLevel(int _level);
 		int GetRating();
 		void SetRating(int rate);
+		
+		int GetRatingDamage();
+		void SetRatingDamage(int rate);
+		int GetRatingHeal();
+		void SetRatingHeal(int rate);
+		int GetRatingTank();
+		void SetRatingTank(int rate);
+		
+		
 		int GetMedalsCount();
 		void SetMedalsCount(int medalsC);
 		int GetMedalsB();
@@ -101,8 +115,8 @@ class PlayerData: Moveable<PlayerData> {
 		void SetMedalsG(int medalG);
 		bool IsValide();
 		
-		PlayerData(int _id,Date _date,int _gamesPlayed=-1,int _level=-1,int _rating=-1,int _medalsC=-1,int _medalsB=-1,int _medalsS=-1,int _medalsG=-1);
-		PlayerData(int _id,int _gamesPlayed=-1,int _level=-1,int _rating=-1,int _medalsC=-1,int _medalsB=-1,int _medalsS=-1,int _medalsG=-1);	
+		PlayerData(int _id,Date _date,int _gamesPlayed=-1,int _level=-1,int _rating=-1,int _rating_damage =-1,int _rating_tank = -1,int _rating_heal =-1,int _medalsC=-1,int _medalsB=-1,int _medalsS=-1,int _medalsG=-1);
+		PlayerData(int _id,int _gamesPlayed=-1,int _level=-1,int _rating=-1,int _rating_damage =-1,int _rating_heal =-1,int _rating_tank =-1,int _medalsC=-1,int _medalsB=-1,int _medalsS=-1,int _medalsG=-1);	
 };
 
 

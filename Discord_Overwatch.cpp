@@ -96,7 +96,22 @@ void Discord_Overwatch::LoadMemoryCRUD(){
 				}else{
 					date.Set(sql[1].Get<int64>());
 				}
-				p.datas.Add(PlayerData(sql[0].Get<int64>() ,date,sql[3].Get<int64>(),sql[4].Get<int64>(),sql[5].Get<int64>(),sql[6].Get<int64>(),sql[7].Get<int64>(),sql[8].Get<int64>(),sql[9].Get<int64>()));
+			/*	Cout() << sql[0].Get<int64>() <<"\n";//DATA ID
+				Cout() << sql[1].Get<int64>() <<"\n";//DATA PLAYER ID
+				Cout() << sql[2].Get<Date>() <<"\n";//DATE
+				Cout() << sql[3].Get<int64>() <<"\n";//GAME PLAYED
+				Cout() << sql[4].Get<int64>() <<"\n";//LEVEL
+				Cout() << sql[5].Get<int64>() <<"\n";//RATING
+				Cout() << sql[6].Get<int64>() <<"\n";//RATING DAMAGE
+				Cout() << sql[7].Get<int64>() <<"\n";//RATING TANK
+				Cout() << sql[8].Get<int64>() <<"\n";//RATING HEAL
+				Cout() << sql[9].Get<int64>() <<"\n"; //TOTAL MEDAL
+				Cout() << sql[10].Get<int64>() <<"\n"; //BRONZE
+				Cout() << sql[11].Get<int64>() <<"\n";//SILVER
+				Cout() << sql[12].Get<int64>() <<"\n";//GOLD*/
+				
+				p.datas.Create(sql[0].Get<int64>() ,date,sql[3].Get<int64>(),sql[4].Get<int64>(),sql[5].Get<int64>(),sql[6].Get<int64>(),sql[7].Get<int64>(),sql[8].Get<int64>(),sql[9].Get<int64>(),sql[10].Get<int64>(),sql[11].Get<int64>(),sql[12].Get<int64>());
+			
 			}
 		}
 		sql*Select(SqlAll()).From(OW_EQUIPES);
@@ -655,13 +670,33 @@ bool Discord_Overwatch::UpdatePlayer(int playerId){
 			int gameP = json["competitiveStats"]["games"]["played"].Get<double>();
 			int level = (json["prestige"].Get<double>() *100) + json["level"].Get<double>();
 			int rating = json["rating"].Get<double>();
+			
+			int ratingDamage = 0;
+			int ratingTank = 0;
+			int ratingHeal = 0;
+			for(auto& leJson : json["ratings"]){
+				if(!IsNull( leJson["role"]) && !IsNull(leJson["level"]) ){
+					String cas =  leJson["role"];
+					if(cas.IsEqual("damage")){
+						ratingDamage = leJson["level"].Get<double>();
+					}else if(cas.IsEqual("tank")){
+						ratingTank = leJson["level"].Get<double>();
+					}else if(cas.IsEqual("support")){
+						ratingHeal = leJson["level"].Get<double>();
+					}
+				}
+			}
+			
 			int medalC = json["competitiveStats"]["awards"]["medals"].Get<double>();
 			int medalB = json["competitiveStats"]["awards"]["medalsBronze"].Get<double>();
 			int medalS = json["competitiveStats"]["awards"]["medalsSilver"].Get<double>();
 			int medalG = json["competitiveStats"]["awards"]["medalsGold"].Get<double>();
 			Sql sql(sqlite3);
-			if(sql*Insert(OW_PLAYER_DATA)(DATA_PLAYER_ID,player->GetPlayerId())(RETRIEVE_DATE,date)(GAMES_PLAYED,gameP)(LEVEL,level)(RATING,rating)(MEDALS_COUNT,medalC)(MEDALS_BRONZE,medalB)(MEDALS_SILVER,medalS)(MEDALS_GOLD,medalG)){
-				player->datas.Add(PlayerData(sql.GetInsertedId().Get<int64>(),date,gameP,level,rating,medalC,medalB,medalS,medalG));
+			if(sql*Insert(OW_PLAYER_DATA)(DATA_PLAYER_ID,player->GetPlayerId())(RETRIEVE_DATE,date)(GAMES_PLAYED,gameP)(LEVEL,level)(RATING,rating)(RATING_DAMAGE,ratingDamage)(RATING_TANK,ratingTank)(RATING_HEAL,ratingHeal)(MEDALS_COUNT,medalC)(MEDALS_BRONZE,medalB)(MEDALS_SILVER,medalS)(MEDALS_GOLD,medalG)){
+				auto& e = player->datas.Add(PlayerData(sql.GetInsertedId().Get<int64>(),date,gameP,level,rating,ratingDamage,ratingTank,ratingHeal,medalC,medalB,medalS,medalG));
+				e.SetRatingDamage(ratingDamage);
+				e.SetRatingTank(ratingTank);
+				e.SetRatingHeal(ratingHeal);
 				return true;
 			}
 			return false;
@@ -723,6 +758,50 @@ void Discord_Overwatch::DrawStatsEquipe(ValueMap payload){ //Permet de déssiner
 				PNGEncoder png;
 				png.SaveFile("temp.png", myGraph.DrawGraph());
 				BotPtr->SendFile(ChannelLastMessage,"Evolution du rank pour " + teamName,"","temp.png");
+			}else{
+				BotPtr->CreateMessage(ChannelLastMessage,"La team n'existe pas ! -_-'");
+			}
+		}else if(MessageArgs[0].IsEqual("damage")|| MessageArgs[0].IsEqual("heal")  || MessageArgs[0].IsEqual("tank")){
+			myGraph.SetGraphName("Evolution du rank damage pour " + teamName);
+			myGraph.DefineXName( "Date");
+			myGraph.DefineYName("Rating " + MessageArgs[0]);
+
+			Equipe* equipe = GetEquipeByName(teamName);
+			if(equipe != nullptr){
+				int cpt = 0;
+				for(int& pid : equipe->playersId){
+					Player* atmP = GetPlayersFromId(pid);
+					String name = ((atmP->GetCommunName().GetCount()> 0)? atmP->GetCommunName():atmP->GetBattleTag());
+					myGraph.AddCourbe(Courbe(name,ValueTypeEnum::DATE, ValueTypeEnum::INT,myGraph.GenerateColor()));
+					myGraph[cpt].ShowDot(true);
+					Date lastDate;
+					int cpt2 =0;
+					for(PlayerData& pd : atmP->datas){
+						//Ici le code est 'dégueu' en gros pour récup tj la last date de la
+						//journée, je boucle sur mes objets data contenant une date. Si l'objet
+						//data sur lequel je suis possède la même date que le précédent alors
+						//je delete le précédant et add celui-ci a la place. Je coderais plus
+						//proprement a l'occass //TODO
+						if(lastDate == pd.GetRetrieveDate()){
+							cpt2--;
+							myGraph[cpt].removeDot(cpt2);
+							if(MessageArgs[0].IsEqual("damage"))myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetRatingDamage()),&myGraph[cpt]));
+							else if(MessageArgs[0].IsEqual("tank"))myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetRatingTank()),&myGraph[cpt]));
+							else if(MessageArgs[0].IsEqual("heal"))myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetRatingHeal()),&myGraph[cpt]));
+							
+						}else{
+							if(MessageArgs[0].IsEqual("damage"))myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetRatingDamage()),&myGraph[cpt]));
+							else if(MessageArgs[0].IsEqual("tank"))myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetRatingTank()),&myGraph[cpt]));
+							else if(MessageArgs[0].IsEqual("heal"))myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetRatingHeal()),&myGraph[cpt]));
+						}
+						lastDate = pd.GetRetrieveDate();
+						cpt2++;
+					}
+					cpt++;
+				}
+				PNGEncoder png;
+				png.SaveFile("temp.png", myGraph.DrawGraph());
+				BotPtr->SendFile(ChannelLastMessage,"Evolution du ranking "+ MessageArgs[0] +" pour " + teamName,"","temp.png");
 			}else{
 				BotPtr->CreateMessage(ChannelLastMessage,"La team n'existe pas ! -_-'");
 			}
@@ -818,50 +897,39 @@ void Discord_Overwatch::DrawStatsPlayer(){
 	GraphDotCloud test(1920,1080);
 	int number = -1;
 	bool date =false;
+	String typeToManage="global";
 	Date d1;
 	Date d2;
 	Player* p = nullptr;
+	
+	
+	//Si le premier param est un chiffre
 	if(MessageArgs.GetCount() >=1 &&  isStringisANumber(MessageArgs[0])){
 		number = std::stoi(MessageArgs[0].ToStd());
-		if(MessageArgs.GetCount() >= 2){// Here I look if param is here
-			if(MessageArgs[1].Find("<@!") !=-1){
-				String id = Replace(MessageArgs[1],Vector<String>{"<",">","@","!"},Vector<String>{"","","",""});
+		MessageArgs.Remove(0,1);
+		for(String& str : MessageArgs){
+			if( str.Find("<@!") !=-1){
+				String id = Replace(str,Vector<String>{"<",">","@","!"},Vector<String>{"","","",""});
 				if(IsRegestered(id)){
 					p= GetPlayersFromDiscordId(id);
 				}else{
-					BotPtr->CreateMessage(ChannelLastMessage,MessageArgs[1] + " n'est pas enregistré. Tapez ```!ow register(votreBtag,votre pseudo)```" );
+					BotPtr->CreateMessage(ChannelLastMessage,str + " n'est pas enregistré. Tapez ```!ow register(votreBtag,votre pseudo)```" );
 					return;	
 				}
-			}else{
-				if(test.LoadGraphParamFromBdd(MessageArgs[1])){
+			}
+			else if( str.IsEqual("damage") || str.IsEqual("global") || str.IsEqual("tank") || str.IsEqual("heal")){
+				typeToManage = str;
+			}else if (!str.Find("/") && !isStringisANumber(str)){
+				if(test.LoadGraphParamFromBdd(str)){
 					BotPtr->CreateMessage(ChannelLastMessage,"Chargement des paramètres reussi.");
 				}else{
 					BotPtr->CreateMessage(ChannelLastMessage,"Impossible de charger ces paramètres...");
 				}
 			}
-		}else{
-			p = GetPlayersFromDiscordId(AuthorId);	
 		}
-		if(MessageArgs.GetCount() >= 3){
-			if(MessageArgs[2].Find("<@!") !=-1){
-				String id = Replace(MessageArgs[2],Vector<String>{"<",">","@","!"},Vector<String>{"","","",""});
-				if(IsRegestered(id)){
-					p= GetPlayersFromDiscordId(id);
-				}else{
-					BotPtr->CreateMessage(ChannelLastMessage,MessageArgs[2] + " n'est pas enregistré. Tapez ```!ow register(votreBtag,votre pseudo)```" );
-					return;	
-				}
-			}else{
-				if(test.LoadGraphParamFromBdd(MessageArgs[2])){
-					BotPtr->CreateMessage(ChannelLastMessage,"Chargement des paramètres reussi.");
-				}else{
-					BotPtr->CreateMessage(ChannelLastMessage,"Impossible de charger ces paramètres...");
-				}
-			}
-		}else if(p == nullptr){
-			p = GetPlayersFromDiscordId(AuthorId);	
-		}
-	}else if(MessageArgs.GetCount() >=2 && MessageArgs[0].Find("/") !=-1 && MessageArgs[1].Find("/") !=-1){
+		if(!p)p = GetPlayersFromDiscordId(AuthorId);	
+	}
+	else if(MessageArgs.GetCount() >=2 && MessageArgs[0].Find("/") !=-1 && MessageArgs[1].Find("/") !=-1){
 		date =true;
 		MessageArgs[0] = Replace(MessageArgs[0],Vector<String>{"\\","."," "},Vector<String>{"/","/","/"});
 		MessageArgs[1] = Replace(MessageArgs[1],Vector<String>{"\\","."," "},Vector<String>{"/","/","/"});
@@ -877,51 +945,41 @@ void Discord_Overwatch::DrawStatsPlayer(){
 			return;
 		}
 		d2 =Date(std::stoi(d[2].ToStd()),std::stoi(d[1].ToStd()),std::stoi(d[0].ToStd()));
-		if(MessageArgs.GetCount() >= 3){// Here I look if param is here
-			if(MessageArgs[2].Find("<@!") !=-1){
-				String id = Replace(MessageArgs[2],Vector<String>{"<",">","@","!"},Vector<String>{"","","",""});
+		MessageArgs.Remove(0,2);
+		for(String& str : MessageArgs){
+			if( str.Find("<@!") !=-1){
+				String id = Replace(str,Vector<String>{"<",">","@","!"},Vector<String>{"","","",""});
 				if(IsRegestered(id)){
 					p= GetPlayersFromDiscordId(id);
 				}else{
-					BotPtr->CreateMessage(ChannelLastMessage,MessageArgs[2] + " n'est pas enregistré. Tapez ```!ow register(votreBtag,votre pseudo)```" );
+					BotPtr->CreateMessage(ChannelLastMessage,str + " n'est pas enregistré. Tapez ```!ow register(votreBtag,votre pseudo)```" );
 					return;	
 				}
-			}else{
-				if(test.LoadGraphParamFromBdd(MessageArgs[2])){
+			}
+			else if( str.IsEqual("damage") || str.IsEqual("global") || str.IsEqual("tank") || str.IsEqual("heal")){
+				typeToManage = str;
+			}else if(!str.Find("/") && !isStringisANumber(str) ){
+				if(test.LoadGraphParamFromBdd(str)){
 					BotPtr->CreateMessage(ChannelLastMessage,"Chargement des paramètres reussi.");
 				}else{
 					BotPtr->CreateMessage(ChannelLastMessage,"Impossible de charger ces paramètres...");
 				}
 			}
-		}else{
-			p = GetPlayersFromDiscordId(AuthorId);	
 		}
-		if(MessageArgs.GetCount() >= 4){
-			if(MessageArgs[3].Find("<@!") !=-1){
-				String id = Replace(MessageArgs[3],Vector<String>{"<",">","@","!"},Vector<String>{"","","",""});
-				if(IsRegestered(id)){
-					p= GetPlayersFromDiscordId(id);
-				}else{
-					BotPtr->CreateMessage(ChannelLastMessage,MessageArgs[3] + " n'est pas enregistré. Tapez ```!ow register(votreBtag,votre pseudo)```" );
-					return;	
-				}
-			}else{
-				if(test.LoadGraphParamFromBdd(MessageArgs[3])){
-					BotPtr->CreateMessage(ChannelLastMessage,"Chargement des paramètres reussi.");
-				}else{
-					BotPtr->CreateMessage(ChannelLastMessage,"Impossible de charger ces paramètres...");
-				}
-			}
-		}else if(!p){
-			p = GetPlayersFromDiscordId(AuthorId);	
-		}
+		if(!p)p = GetPlayersFromDiscordId(AuthorId);
 	}else if(MessageArgs.GetCount()==0){
 		p = GetPlayersFromDiscordId(AuthorId);	
 	}
-	if(p){
 	
+/*	for(const String& checkMultiRating : MessageArgs){
+		if(checkMultiRating.IsEqual("damage")|| checkMultiRating.IsEqual("heal")  ||checkMultiRating.IsEqual("tank")){
+			typeToManage = 	checkMultiRating;
+			break;
+		}
+	}*/
+	if(p){
 		test.DefineXValueType(ValueTypeEnum::INT);
-		test.SetGraphName("Evolution du rating pour " + p->GetCommunName());
+		test.SetGraphName("Evolution du ranking " + typeToManage +" pour " + p->GetCommunName());
 		test.DefineXName( "Enregistrement");
 		test.DefineYName("Elo");
 		int cpt = 0;
@@ -930,20 +988,25 @@ void Discord_Overwatch::DrawStatsPlayer(){
 		
 		r.ShowDot(true);
 		for(PlayerData& pd : p->datas){
+			int dataToProvide = 0;
+			if(typeToManage.IsEqual("damage"))dataToProvide = pd.GetRatingDamage();
+			else if(typeToManage.IsEqual("tank"))dataToProvide = pd.GetRatingTank();
+			else if(typeToManage.IsEqual("heal"))dataToProvide = pd.GetRatingHeal();
+			else if(typeToManage.IsEqual("global"))dataToProvide = pd.GetRating();
 			if(number !=-1){
 				if((p->datas.GetCount() - cpt) <= number){
-					r.AddDot(Dot(Value(cpt),Value(pd.GetRating()),&r));
+					r.AddDot(Dot(Value(cpt),Value(dataToProvide),&r));
 					cpt++;
 				}else{
 					cpt++;	
 				}
 			}else if(date){
 				if(d1 <= pd.GetRetrieveDate() && d2 >= pd.GetRetrieveDate()){
-					r.AddDot(Dot(Value(cpt),Value(pd.GetRating()),&r));
+					r.AddDot(Dot(Value(cpt),Value(dataToProvide),&r));
 					cpt++;
 				}
 			}else{
-				r.AddDot(Dot(Value(cpt),Value(pd.GetRating()),&r));
+				r.AddDot(Dot(Value(cpt),Value(dataToProvide),&r));
 				cpt++;
 			}
 		}
@@ -961,7 +1024,118 @@ void Discord_Overwatch::DrawStatsPlayer(){
 #ifndef flagGRAPHBUILDER_DB
 //!ow DrawStatsPlayer(rating,[@BASTION#21406],20) I actually want 20 last elo change
 void Discord_Overwatch::DrawStatsPlayer(){
+	GraphDotCloud test(1920,1080);
+	int number = -1;
+	bool date =false;
+	String typeToManage="global";
+	Date d1;
+	Date d2;
+	Player* p = nullptr;
 	
+	
+	//Si le premier param est un chiffre
+	if(MessageArgs.GetCount() >=1 &&  isStringisANumber(MessageArgs[0])){
+		number = std::stoi(MessageArgs[0].ToStd());
+		MessageArgs.Remove(0,1);
+		for(String& str : MessageArgs){
+			if( str.Find("<@!") !=-1){
+				String id = Replace(str,Vector<String>{"<",">","@","!"},Vector<String>{"","","",""});
+				if(IsRegestered(id)){
+					p= GetPlayersFromDiscordId(id);
+				}else{
+					BotPtr->CreateMessage(ChannelLastMessage,str + " n'est pas enregistré. Tapez ```!ow register(votreBtag,votre pseudo)```" );
+					return;	
+				}
+			}
+			else if( str.IsEqual("damage") || str.IsEqual("global") || str.IsEqual("tank") || str.IsEqual("heal")){
+				typeToManage = str;
+			}
+		}
+		if(!p)p = GetPlayersFromDiscordId(AuthorId);	
+	}
+	else if(MessageArgs.GetCount() >=2 && MessageArgs[0].Find("/") !=-1 && MessageArgs[1].Find("/") !=-1){
+		date =true;
+		MessageArgs[0] = Replace(MessageArgs[0],Vector<String>{"\\","."," "},Vector<String>{"/","/","/"});
+		MessageArgs[1] = Replace(MessageArgs[1],Vector<String>{"\\","."," "},Vector<String>{"/","/","/"});
+		auto d = Split(MessageArgs[0],"/");
+		if(!isStringisANumber(d[0]) || !isStringisANumber(d[1]) || !isStringisANumber(d[2])){
+			BotPtr->CreateMessage(ChannelLastMessage,MessageArgs[0] + " n'est pas une Date valide." );
+			return;	
+		}
+		d1 =Date(std::stoi(d[2].ToStd()),std::stoi(d[1].ToStd()),std::stoi(d[0].ToStd()));
+		d = Split(MessageArgs[1],"/");
+		if(!isStringisANumber(d[0]) || !isStringisANumber(d[1]) || !isStringisANumber(d[2])){
+			BotPtr->CreateMessage(ChannelLastMessage,MessageArgs[1] + " n'est pas une Date valide." );
+			return;
+		}
+		d2 =Date(std::stoi(d[2].ToStd()),std::stoi(d[1].ToStd()),std::stoi(d[0].ToStd()));
+		MessageArgs.Remove(0,2);
+		for(String& str : MessageArgs){
+			if( str.Find("<@!") !=-1){
+				String id = Replace(str,Vector<String>{"<",">","@","!"},Vector<String>{"","","",""});
+				if(IsRegestered(id)){
+					p= GetPlayersFromDiscordId(id);
+				}else{
+					BotPtr->CreateMessage(ChannelLastMessage,str + " n'est pas enregistré. Tapez ```!ow register(votreBtag,votre pseudo)```" );
+					return;	
+				}
+			}
+			else if( str.IsEqual("damage") || str.IsEqual("global") || str.IsEqual("tank") || str.IsEqual("heal")){
+				typeToManage = str;
+			}
+		}
+		if(!p)p = GetPlayersFromDiscordId(AuthorId);
+	}else if(MessageArgs.GetCount()==0){
+		p = GetPlayersFromDiscordId(AuthorId);	
+	}
+	
+/*	for(const String& checkMultiRating : MessageArgs){
+		if(checkMultiRating.IsEqual("damage")|| checkMultiRating.IsEqual("heal")  ||checkMultiRating.IsEqual("tank")){
+			typeToManage = 	checkMultiRating;
+			break;
+		}
+	}*/
+	if(p){
+		test.DefineXValueType(ValueTypeEnum::INT);
+		test.SetGraphName("Evolution du ranking " + typeToManage +" pour " + p->GetCommunName());
+		test.DefineXName( "Enregistrement");
+		test.DefineYName("Elo");
+		int cpt = 0;
+		test.AddCourbe(Courbe(p->GetCommunName(),ValueTypeEnum::INT,ValueTypeEnum::INT,test.GenerateColor()));
+		auto& r = test[0];
+		
+		r.ShowDot(true);
+		for(PlayerData& pd : p->datas){
+			int dataToProvide = 0;
+			if(typeToManage.IsEqual("damage"))dataToProvide = pd.GetRatingDamage();
+			else if(typeToManage.IsEqual("tank"))dataToProvide = pd.GetRatingTank();
+			else if(typeToManage.IsEqual("heal"))dataToProvide = pd.GetRatingHeal();
+			else if(typeToManage.IsEqual("global"))dataToProvide = pd.GetRating();
+			if(number !=-1){
+				if((p->datas.GetCount() - cpt) <= number){
+					r.AddDot(Dot(Value(cpt),Value(dataToProvide),&r));
+					cpt++;
+				}else{
+					cpt++;	
+				}
+			}else if(date){
+				if(d1 <= pd.GetRetrieveDate() && d2 >= pd.GetRetrieveDate()){
+					r.AddDot(Dot(Value(cpt),Value(dataToProvide),&r));
+					cpt++;
+				}
+			}else{
+				r.AddDot(Dot(Value(cpt),Value(dataToProvide),&r));
+				cpt++;
+			}
+		}
+			
+		PNGEncoder png;
+		png.SaveFile("temp2.png", test.DrawGraph());
+		BotPtr->SendFile(ChannelLastMessage,"Evolution du rating pour " + p->GetCommunName(),"","temp2.png");
+	}
+	else{
+		BotPtr->CreateMessage(ChannelLastMessage,"Utilisateur introuvable en BDD.");	
+	}	
 }
 
 //!ow DrawStatsEquipe(rating,Sombre est mon histoire)
@@ -1006,6 +1180,50 @@ void Discord_Overwatch::DrawStatsEquipe(ValueMap payload){ //Permet de déssiner
 				PNGEncoder png;
 				png.SaveFile("temp.png", myGraph.DrawGraph());
 				BotPtr->SendFile(ChannelLastMessage,"Evolution du rank pour " + teamName,"","temp.png");
+			}else{
+				BotPtr->CreateMessage(ChannelLastMessage,"La team n'existe pas ! -_-'");
+			}
+		}else if(MessageArgs[0].IsEqual("damage")|| MessageArgs[0].IsEqual("heal")  || MessageArgs[0].IsEqual("tank")){
+			myGraph.SetGraphName("Evolution du rank damage pour " + teamName);
+			myGraph.DefineXName( "Date");
+			myGraph.DefineYName("Rating " + MessageArgs[0]);
+
+			Equipe* equipe = GetEquipeByName(teamName);
+			if(equipe != nullptr){
+				int cpt = 0;
+				for(int& pid : equipe->playersId){
+					Player* atmP = GetPlayersFromId(pid);
+					String name = ((atmP->GetCommunName().GetCount()> 0)? atmP->GetCommunName():atmP->GetBattleTag());
+					myGraph.AddCourbe(Courbe(name,ValueTypeEnum::DATE, ValueTypeEnum::INT,myGraph.GenerateColor()));
+					myGraph[cpt].ShowDot(true);
+					Date lastDate;
+					int cpt2 =0;
+					for(PlayerData& pd : atmP->datas){
+						//Ici le code est 'dégueu' en gros pour récup tj la last date de la
+						//journée, je boucle sur mes objets data contenant une date. Si l'objet
+						//data sur lequel je suis possède la même date que le précédent alors
+						//je delete le précédant et add celui-ci a la place. Je coderais plus
+						//proprement a l'occass //TODO
+						if(lastDate == pd.GetRetrieveDate()){
+							cpt2--;
+							myGraph[cpt].removeDot(cpt2);
+							if(MessageArgs[0].IsEqual("damage"))myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetRatingDamage()),&myGraph[cpt]));
+							else if(MessageArgs[0].IsEqual("tank"))myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetRatingTank()),&myGraph[cpt]));
+							else if(MessageArgs[0].IsEqual("heal"))myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetRatingHeal()),&myGraph[cpt]));
+							
+						}else{
+							if(MessageArgs[0].IsEqual("damage"))myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetRatingDamage()),&myGraph[cpt]));
+							else if(MessageArgs[0].IsEqual("tank"))myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetRatingTank()),&myGraph[cpt]));
+							else if(MessageArgs[0].IsEqual("heal"))myGraph[cpt].AddDot(Dot(Value(pd.GetRetrieveDate()),Value(pd.GetRatingHeal()),&myGraph[cpt]));
+						}
+						lastDate = pd.GetRetrieveDate();
+						cpt2++;
+					}
+					cpt++;
+				}
+				PNGEncoder png;
+				png.SaveFile("temp.png", myGraph.DrawGraph());
+				BotPtr->SendFile(ChannelLastMessage,"Evolution du ranking "+ MessageArgs[0] +" pour " + teamName,"","temp.png");
 			}else{
 				BotPtr->CreateMessage(ChannelLastMessage,"La team n'existe pas ! -_-'");
 			}
@@ -1098,7 +1316,7 @@ void Discord_Overwatch::updateRating(ValueMap payload){
 					auto& buff =  player->datas[player->datas.GetCount()-1];
 					Date date = GetSysDate();
 					Sql sql(sqlite3);
-					if(sql*Insert(OW_PLAYER_DATA)(DATA_PLAYER_ID,player->GetPlayerId())(RETRIEVE_DATE,date)(GAMES_PLAYED,buff.GetGamesPlayed())(LEVEL,buff.GetLevel())(RATING,Elo)(MEDALS_COUNT,buff.GetMedalsCount())(MEDALS_BRONZE,buff.GetMedalsB())(MEDALS_SILVER,buff.GetMedalsS())(MEDALS_GOLD,buff.GetMedalsG())){
+					if(sql*Insert(OW_PLAYER_DATA)(DATA_PLAYER_ID,player->GetPlayerId())(RETRIEVE_DATE,date)(GAMES_PLAYED,buff.GetGamesPlayed())(LEVEL,buff.GetLevel())(RATING,Elo)(RATING_DAMAGE,Elo)(RATING_TANK,Elo)(RATING_HEAL,Elo)(MEDALS_COUNT,buff.GetMedalsCount())(MEDALS_BRONZE,buff.GetMedalsB())(MEDALS_SILVER,buff.GetMedalsS())(MEDALS_GOLD,buff.GetMedalsG())){
 						player->datas.Add(PlayerData(sql.GetInsertedId().Get<int64>(),date,buff.GetGamesPlayed(),buff.GetLevel(),Elo,buff.GetMedalsCount(),buff.GetMedalsB(),buff.GetMedalsS(),buff.GetMedalsG()));
 						BotPtr->CreateMessage(ChannelLastMessage,"Enregistrement effectué !");
 					}else{
@@ -1383,10 +1601,12 @@ void Discord_Overwatch::Help(ValueMap payload){
 					help << "!ow Eupd(EquipeName)"<<" -> Mets à jours toute l'équipe par rapport à l'Api(Vous devez être dans l'équipe.).\n\n";
 					#ifdef flagGRAPHBUILDER_DB
 					help << "!ow DrawStatsEquipe(ValueToStatify,EquipeName,graphParameterName)"<<" -> Dessine un graph par rapport à la value à afficher (rating, levels, medals, games) par rapport au paramètres chargés.\n\n";
+					help << "!ow DrawStats( (Date Debut,Date fin) || Nombre de point,Type de Ranking, BattleTag, Paramètre de Graph)"<<" -> Dessine un graph par rapport à la value à afficher (rating, damage, tank, heal).\n\n";
 					help << "!ow SaveGraphParam(NameOfSavedParam)"<<" -> Sauvegarde les paramètres actuel en BDD, n'oubliez pas le nom du paramétrage !\n\n";
 					#endif
 					#ifndef flagGRAPHBUILDER_DB
 					help << "!ow DrawStatsEquipe(ValueToStatify,EquipeName)"<<" -> Dessine un graph par rapport à la value à afficher (rating, levels, medals, games).\n\n";
+					help << "!ow DrawStats( (Date Debut,Date fin) || Nombre de point,Type de Ranking, BattleTag)"<<" -> Dessine un graph par rapport à la value à afficher (rating, damage, tank, heal).\n\n";
 					#endif
 					help << "!ow GraphProperties(Property,Value)"<<" ->Definie les proprieté pour le graph, Si aucun arguments.\n\n";
 					help << "!ow GraphProperties()"<<" ->renvoie l'aide sur les proprietées.\n\n";
