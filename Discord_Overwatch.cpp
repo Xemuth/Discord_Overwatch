@@ -43,7 +43,7 @@ Discord_Overwatch::Discord_Overwatch(Upp::String _name, Upp::String _prefix):myG
 	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("giveright"))GiveRight(e);});
 	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("removeright"))RemoveRight(e);});
 	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("crud"))GetCRUD(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("reloadcrud"))ReloadCRUD(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("reload"))ReloadCRUD(e);});
 	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("addtoequipe"))AddPersonToEquipe(e);});
 	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("removefromequipe"))RemovePersonToEquipe(e);});
 	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("removemefromequipe"))RemoveMeFromEquipe(e);});
@@ -307,6 +307,14 @@ void Discord_Overwatch::DeleteProfil(ValueMap payload){ //Remove user from the b
 			if(DeletePlayerById(id)){
 				Sql sql(sqlite3);
 				if(sql*Delete(OW_PLAYERS).Where(DISCORD_ID == id)){
+					int cpt =0;
+					for(Player& p : players){
+						if(p.GetPlayerId() == id) {
+							players.Remove(cpt,1);
+							break;	
+						}
+						cpt++;
+					}
 					BotPtr->CreateMessage(ChannelLastMessage,"Supression reussie");
 				}else{
 					BotPtr->CreateMessage(ChannelLastMessage,"Erreur SQL");
