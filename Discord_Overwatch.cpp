@@ -29,7 +29,7 @@ at the end of Database loading function
 
 Discord_Overwatch::Discord_Overwatch(Upp::String _name, Upp::String _prefix):myGraph(1920,1080){
 	name = _name;
-	prefix = _prefix;
+	AddPrefix(_prefix);
 	
 	prepareOrLoadBDD();
 	LoadMemoryCRUD();
