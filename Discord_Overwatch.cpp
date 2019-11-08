@@ -36,28 +36,28 @@ Discord_Overwatch::Discord_Overwatch(Upp::String _name, Upp::String _prefix):myG
 	
 	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("execsql"))executeSQL(e);});
 	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("api"))testApi(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("register"))Register(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("remove"))DeleteProfil(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("createequipe"))CreateEquipe(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("removeequipe"))RemoveEquipe(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("giveright"))GiveRight(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("removeright"))RemoveRight(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("crud"))GetCRUD(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("reload"))ReloadCRUD(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("addtoequipe"))AddPersonToEquipe(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("removefromequipe"))RemovePersonToEquipe(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("removemefromequipe"))RemoveMeFromEquipe(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("upd"))ForceUpdate(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("eupd"))ForceEquipeUpdate(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("upr"))updateRating(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("graphproperties"))GraphProperties(e);});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("register"))Register();});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("remove"))DeleteProfil();});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("createequipe"))CreateEquipe();});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("removeequipe"))RemoveEquipe();});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("giveright"))GiveRight(MessageArgs.Get("discordid").Get<String>(), MessageArgs.Get("team").Get<String>());});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("removeright"))RemoveRight(MessageArgs.Get("discordid").Get<String>(), MessageArgs.Get("team").Get<String>());});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("crud"))GetCRUD(e);}); // TODO
+	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("reload"))ReloadCRUD(e);}); // TODO
+	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("addtoequipe"))AddPersonToEquipe(MessageArgs.Get("discordid").Get<String>(), MessageArgs.Get("team").Get<String>());});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("removefromequipe"))RemovePersonFromEquipe(MessageArgs.Get("discordid").Get<String>(), MessageArgs.Get("team").Get<String>());});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("removemefromequipe"))RemoveMeFromEquipe(AuthorId, MessageArgs.Get("team").Get<String>());});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("upd"))ForceUpdate(MessageArgs.Get("discordid").Get<String>());});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("eupd"))ForceEquipeUpdate(MessageArgs.Get("team").Get<String>());});
+	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("upr"))updateRating(e);}); // TODO
+	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("graphproperties"))GraphProperties(e);}); // TODO
 	#ifdef flagGRAPHBUILDER_DB //Flag must be define to activate all DB func
-		EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("drawstatsequipe"))DrawStatsEquipe(e);});
-		EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("savegraphparam"))saveActualGraph(e);});
-		EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("drawstats"))DrawStatsPlayer();});
+		EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("drawstatsequipe"))DrawStatsEquipe(MessageArgs.Get("team").Get<String>());});
+		EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("savegraphparam"))saveActualGraph(e);}); // TODO
+		EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("drawstats"))DrawStatsPlayer();}); // TODO
 	#endif
 	#ifndef flagGRAPHBUILDER_DB
-		EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("drawstatsequipe"))DrawStatsEquipe(e);}); 
+		EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("drawstatsequipe"))DrawStatsEquipe(MessageArgs.Get("team").Get<String>());}); 
 	#endif
 	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("startautoupdate"))startThread();});
 	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("stopautoupdate"))stopThread();});
@@ -281,12 +281,24 @@ void Discord_Overwatch::testApi(ValueMap payload){
 }
 
 //!ow register(BASTION#21406,Clément)
-void Discord_Overwatch::Register(ValueMap payload){// The main idea is " You must be registered to be addable to an equipe or create Equipe
-	if(MessageArgs.GetCount()==2){
+void Discord_Overwatch::Register(){// The main idea is " You must be registered to be addable to an equipe or create Equipe	
+	if (MessageArgs.Find("battletag") == -1 || MessageArgs.Get("battletag").Get<String>().IsEmpty()){
+		BotPtr->CreateMessage(ChannelLastMessage, "Il faut me donner un battletag ! ```!ow register(battletag:NattyRoots#12345, pseudo:Natty)```");
+		return;
+	}
+	if (MessageArgs.Find("pseudo") == -1 || MessageArgs.Get("pseudo").Get<String>().IsEmpty()){
+		BotPtr->CreateMessage(ChannelLastMessage, "Il faut me donner un pseudo ! ```!ow register(battletag:NattyRoots#12345, pseudo:Natty)```");
+		return;
+	}
+	
+	String battleTag = MessageArgs.Get("battletag").Get<String>();
+	String pseudo = MessageArgs.Get("pseudo").Get<String>();
+	
+	if(battleTag.GetCount() == 0 || pseudo.GetCount() == 0){
 		try{
 			Sql sql(sqlite3);
-			if(sql*Insert(OW_PLAYERS)(BATTLE_TAG,MessageArgs[0])(DISCORD_ID,AuthorId)(COMMUN_NAME,MessageArgs[1])){
-				players.Add(Player(sql.GetInsertedId().Get<int64>(),MessageArgs[0],AuthorId,MessageArgs[1] ));
+			if(sql*Insert(OW_PLAYERS)(BATTLE_TAG,battleTag)(DISCORD_ID,AuthorId)(COMMUN_NAME,pseudo)){
+				players.Add(Player(sql.GetInsertedId().Get<int64>(),battleTag,AuthorId,pseudo));
 				BotPtr->CreateMessage(ChannelLastMessage,"Enregistrement réussie");
 				return;
 			}
@@ -300,138 +312,157 @@ void Discord_Overwatch::Register(ValueMap payload){// The main idea is " You mus
 }
 
 //!ow remove 
-void Discord_Overwatch::DeleteProfil(ValueMap payload){ //Remove user from the bdd 
-	if(MessageArgs.GetCount()==0){
-		try{
-			int id = GetPlayersFromDiscordId(AuthorId)->GetPlayerId();
-			if(DeletePlayerById(id)){
-				Sql sql(sqlite3);
-				if(sql*Delete(OW_PLAYERS).Where(DISCORD_ID == id)){
-					int cpt =0;
-					for(Player& p : players){
-						if(p.GetPlayerId() == id) {
-							players.Remove(cpt,1);
-							break;	
-						}
-						cpt++;
+void Discord_Overwatch::DeleteProfil(){ //Remove user from the bdd 
+	try{
+		int id = GetPlayersFromDiscordId(AuthorId)->GetPlayerId();
+		if(DeletePlayerById(id)){
+			Sql sql(sqlite3);
+			if(sql*Delete(OW_PLAYERS).Where(DISCORD_ID == id)){
+				int cpt =0;
+				for(Player& p : players){
+					if(p.GetPlayerId() == id) {
+						players.Remove(cpt,1);
+						break;	
 					}
-					BotPtr->CreateMessage(ChannelLastMessage,"Supression reussie");
-				}else{
-					BotPtr->CreateMessage(ChannelLastMessage,"Erreur SQL");
+					cpt++;
 				}
+				BotPtr->CreateMessage(ChannelLastMessage,"Supression reussie");
 			}else{
-				BotPtr->CreateMessage(ChannelLastMessage,"Impossible de vous supprimer !  Vous êtes leader d'une équipe");	
-			}
-		}catch(...){
-			BotPtr->CreateMessage(ChannelLastMessage,"Error deletion");
-		}
-	}else{
-		BotPtr->CreateMessage(ChannelLastMessage,"Erreur arguments ! Recommence sans mettre d'arguments```!ow Remove()```");	
-	}
-}
-
-//!ow createEquipe(Sombre est mon histoire)
-void Discord_Overwatch::CreateEquipe(ValueMap payload){ //To add an equipe you must be registered. when an equipe is created, only 
-	if(MessageArgs.GetCount()==1){
-		if(IsRegestered(AuthorId)){
-			try{
-				String teamName=MessageArgs[0];
-				
-				Sql sql(sqlite3);
-				if(sql*Insert(OW_EQUIPES)(EQUIPE_NAME,teamName)){
-					int idInserted = 0;
-					idInserted =sql.GetInsertedId().Get<int64>();
-					int playerID = GetPlayersFromDiscordId(AuthorId)->GetPlayerId();
-					if(idInserted !=0){
-						if(sql*Insert(OW_EQUIPES_CREATOR)(EC_EQUIPES_ID,idInserted)(EC_PLAYER_ID,GetPlayersFromDiscordId(AuthorId)->GetPlayerId())(EC_ADMIN,true) && sql*Insert(OW_EQUIPES_PLAYERS)(EP_EQUIPE_ID,idInserted)(EP_PLAYER_ID,playerID)){
-							auto& e= 	equipes.Add(Equipe(idInserted,teamName));
-							e.creators.Add(EquipeCreator(playerID,true));
-							e.playersId.Add(playerID);
-							BotPtr->CreateMessage(ChannelLastMessage,"Ajout d'équipe reussie");
-							return;
-						}
-					}
-				}
-				BotPtr->CreateMessage(ChannelLastMessage,"Erreur création team");
-			}catch(...){
-				BotPtr->CreateMessage(ChannelLastMessage,"Erreur création team");
+				BotPtr->CreateMessage(ChannelLastMessage,"Erreur SQL");
 			}
 		}else{
-			BotPtr->CreateMessage(ChannelLastMessage,"You must be registered Before creating team ! ");
+			BotPtr->CreateMessage(ChannelLastMessage,"Impossible de vous supprimer !  Vous êtes leader d'une équipe");	
 		}
-	}else{
-		BotPtr->CreateMessage(ChannelLastMessage,"Erreur arguments ! j'attends juste le nom de ton équipe```!ow CreateEquipe(Ton equipe bronze avec 1K2 d elo moyen)```");	
+	}catch(...){
+		BotPtr->CreateMessage(ChannelLastMessage,"Error deletion");
 	}
 }
 
-//!ow removeEquipe Sombre est mon histoire 
-void Discord_Overwatch::RemoveEquipe(ValueMap payload){ //you must have the right to remove equipe
-	if(MessageArgs.GetCount()==1 ){
-		if(IsRegestered(AuthorId)){
-			String teamName=MessageArgs[0];
+//!ow createEquipe(team:Sombre est mon histoire)
+void Discord_Overwatch::CreateEquipe(){ //To add an equipe you must be registered. when an equipe is created, only 
+	
+	if (MessageArgs.Find("team") == -1 || MessageArgs.Get("team").Get<String>().IsEmpty()){
+		BotPtr->CreateMessage(ChannelLastMessage, "Il faut me donner un nom d'équipe ! ```!ow createequipe(team:MonEquipe)```")
+		return;
+	}
+	
+	String teamName = MessageArgs.Get("team").Get<String>();
+	
+	if(IsRegestered(AuthorId)){
+		try{			
+			Sql sql(sqlite3);
+			if(sql*Insert(OW_EQUIPES)(EQUIPE_NAME,teamName)){
+				int idInserted = 0;
+				idInserted =sql.GetInsertedId().Get<int64>();
+				int playerID = GetPlayersFromDiscordId(AuthorId)->GetPlayerId();
+				if(idInserted !=0){
+					if(sql*Insert(OW_EQUIPES_CREATOR)(EC_EQUIPES_ID,idInserted)(EC_PLAYER_ID,GetPlayersFromDiscordId(AuthorId)->GetPlayerId())(EC_ADMIN,true) && sql*Insert(OW_EQUIPES_PLAYERS)(EP_EQUIPE_ID,idInserted)(EP_PLAYER_ID,playerID)){
+						auto& e= 	equipes.Add(Equipe(idInserted,teamName));
+						e.creators.Add(EquipeCreator(playerID,true));
+						e.playersId.Add(playerID);
+						BotPtr->CreateMessage(ChannelLastMessage,"Ajout d'équipe reussie");
+						return;
+					}
+				}
+			}
+			BotPtr->CreateMessage(ChannelLastMessage,"Erreur création team");
+		}catch(...){
+			BotPtr->CreateMessage(ChannelLastMessage,"Erreur création team");
+		}
+	}else{
+		BotPtr->CreateMessage(ChannelLastMessage,"You must be registered Before creating team ! ");
+	}
+}
+
+//!ow removeEquipe(team:Sombre est mon histoire)
+void Discord_Overwatch::RemoveEquipe(){ //you must have the right to remove equipe
+	
+	if (MessageArgs.Find('team') == -1 || MessageArgs.Get("team").Get<String>().IsEmpty()){
+		BotPtr->CreateMessage(ChannelLastMessage, "Il faut me donner un nom d'équipe ! ```!ow removeequipe(team:monEquipe)```")
+		return;	
+	}
+	
+	String teamName=MessageArgs.Get("team").Get<String>();
+	
+	if(IsRegestered(AuthorId)){
+		if(DoEquipeExist(teamName)){
+			if(DoUserHaveRightOnTeam(teamName, AuthorId)){
+				Sql sql(sqlite3);
+				int equipeId =GetEquipeByName(teamName)->GetEquipeId();
+				if(sql*Delete(OW_EQUIPES).Where(EQUIPE_ID ==equipeId)){
+					DeleteEquipeById(equipeId);
+					BotPtr->CreateMessage(ChannelLastMessage,"L'Equipe à été supprimée !");
+				}else{
+					BotPtr->CreateMessage(ChannelLastMessage,"Erreur SQL !");
+				}
+			}else{
+				BotPtr->CreateMessage(ChannelLastMessage,"You're not the team leader !");
+			}
+		}else{
+			BotPtr->CreateMessage(ChannelLastMessage,"L'équipe n'existe pas !");
+		}
+	}else{
+		BotPtr->CreateMessage(ChannelLastMessage,"T'es même pas inscrit va pas croire que tu peux faire ça tocard ! hinhin il a un boulot de merde en plus");	
+	}
+}
+
+//!ow GiveRight(discordid:@NattyRoots;team:Sombre est mon histoire)
+void Discord_Overwatch::GiveRight(){ //Allow equipe owner/ equipe righter to add person to the equipe
+	
+	if (MessageArgs.Find("discordid") == -1 || MessageArgs.Get("discordid").Get<String>().IsEmpty()){
+		BotPtr->CreateMessage(ChannelLastMessage, "Il faut me donner l'ID Discord de quelqu'un ! ```!ow giveright(discordid:@NattyRoots;team:MonEquipe)```");
+		return;
+	}
+	
+	if (MessageArgs.Find("team") == -1 || MessageArgs.Get("team").Get<String>().IsEmpty()){
+		BotPtr->CreateMessage(ChannelLastMessage, "Il faut me donner un nom d'equipe pour que je l'ajoute ! ```!ow giveright(discordid:@NattyRoots;team:MonEquipe)```");
+		return;
+	}
+	
+	String discordId = MessageArgs.Get("discordid").Get<String>();
+	String teamName = MessageArgs.Get("team").Get<String>();
+	
+	String idCite = Replace(discordId,Vector<String>{"<",">","@","!"},Vector<String>{"","","",""});
+	if( IsRegestered(AuthorId)){
+		if(IsRegestered(idCite)){
 			if(DoEquipeExist(teamName)){
 				if(DoUserHaveRightOnTeam(teamName, AuthorId)){
-					Sql sql(sqlite3);
-					int equipeId =GetEquipeByName(teamName)->GetEquipeId();
-					if(sql*Delete(OW_EQUIPES).Where(EQUIPE_ID ==equipeId)){
-						DeleteEquipeById(equipeId);
-						BotPtr->CreateMessage(ChannelLastMessage,"L'Equipe à été supprimée !");
-					}else{
-						BotPtr->CreateMessage(ChannelLastMessage,"Erreur SQL !");
-					}
+						if(!DoUserHaveRightOnTeam(teamName, idCite)){
+							int id= GetPlayersFromDiscordId(idCite)->GetPlayerId();
+							Sql sql(sqlite3);
+							if(sql*Insert(OW_EQUIPES_CREATOR)(EC_EQUIPES_ID,GetEquipeByName(teamName)->GetEquipeId())(EC_PLAYER_ID,id )(EC_ADMIN,false ) && sql*Insert(OW_EQUIPES_PLAYERS)(EP_EQUIPE_ID,GetEquipeByName(teamName)->GetEquipeId())(EP_PLAYER_ID,id )){
+								auto* equipe = GetEquipeByName(teamName);
+								equipe->creators.Add(EquipeCreator(id,false));
+								equipe->playersId.Add(id);
+								BotPtr->CreateMessage(ChannelLastMessage,"Ajout de  "+ discordId + " dans " + teamName +" !");
+								BotPtr->CreateMessage(ChannelLastMessage,"Droits donnés à "+ discordId + "!");
+							}
+						}else{
+							BotPtr->CreateMessage(ChannelLastMessage, discordId + " à déjà les droits !");
+						}
 				}else{
-					BotPtr->CreateMessage(ChannelLastMessage,"You're not the team leader !");
+					BotPtr->CreateMessage(ChannelLastMessage,"You do not have right");
 				}
 			}else{
 				BotPtr->CreateMessage(ChannelLastMessage,"Team do not exist !");
 			}
-		}
-	}else{
-		BotPtr->CreateMessage(ChannelLastMessage,"Erreur arguments ! j'attends juste le nom de ton équipe```!ow RemoveEquipe(Ton equipe bronze avec 1K2 d elo moyen)```");	
-	}
-}
-
-//!ow GiveRight(@NattyRoots,Sombre est mon histoire)
-void Discord_Overwatch::GiveRight(ValueMap payload){ //Allow equipe owner/ equipe righter to add person to the equipe
-	if(MessageArgs.GetCount()==2){
-		String idCite = Replace(MessageArgs[0],Vector<String>{"<",">","@","!"},Vector<String>{"","","",""});
-		if( IsRegestered(AuthorId)){
-			if(IsRegestered(idCite)){
-				String teamName= MessageArgs[1];
-				if(DoEquipeExist(teamName)){
-					if(DoUserHaveRightOnTeam(teamName, AuthorId)){
-							if(!DoUserHaveRightOnTeam(teamName, idCite)){
-								int id= GetPlayersFromDiscordId(idCite)->GetPlayerId();
-								Sql sql(sqlite3);
-								if(sql*Insert(OW_EQUIPES_CREATOR)(EC_EQUIPES_ID,GetEquipeByName(teamName)->GetEquipeId())(EC_PLAYER_ID,id )(EC_ADMIN,false ) && sql*Insert(OW_EQUIPES_PLAYERS)(EP_EQUIPE_ID,GetEquipeByName(teamName)->GetEquipeId())(EP_PLAYER_ID,id )){
-									auto* equipe = GetEquipeByName(teamName);
-									equipe->creators.Add(EquipeCreator(id,false));
-									equipe->playersId.Add(id);
-									BotPtr->CreateMessage(ChannelLastMessage,"Ajout de  "+ MessageArgs[0] + " dans " + teamName +" !");
-									BotPtr->CreateMessage(ChannelLastMessage,"Droits donnés à "+ MessageArgs[0] + "!");
-								}
-							}else{
-								BotPtr->CreateMessage(ChannelLastMessage,MessageArgs[0] + " à déjà les droits !");
-							}
-					}else{
-						BotPtr->CreateMessage(ChannelLastMessage,"You do not have right");
-					}
-				}else{
-					BotPtr->CreateMessage(ChannelLastMessage,"Team do not exist !");
-				}
-			}else{
-				BotPtr->CreateMessage(ChannelLastMessage,  MessageArgs[0] + " n'est pas enregistré !");
-			}
 		}else{
-			BotPtr->CreateMessage(ChannelLastMessage,"Vous n'êtes pas enregistré !");
+			BotPtr->CreateMessage(ChannelLastMessage,  discordId + " n'est pas enregistré !");
 		}
 	}else{
-		BotPtr->CreateMessage(ChannelLastMessage,"Erreur arguments ! j'attends juste ton mate et ton equipe mon petit canard```!ow GiveRight(@NattyRoots,Ton equipe bronze avec 1K2 d elo moyen)```");	
+		BotPtr->CreateMessage(ChannelLastMessage,"Vous n'êtes pas enregistré !");
 	}
+
 }
 
 //!ow RemoveRight @NattyRoots Sombre est mon histoire
-void Discord_Overwatch::RemoveRight(ValueMap payload){ //Remove equipe righter to one personne By discord ID
+void Discord_Overwatch::RemoveRight(){ //Remove equipe righter to one personne By discord ID
+
+	if (MessageArgs.Find("discordid") == -1 || MessageArgs.Get("discordid").Get<String>().IsEmpty()){
+		BotPtr->CreateMessage(ChannelLastMessage, "Il faut me donner un ID discord ! ```!ow removeright(discordid:)```")
+		return;
+	}
+
 	if(MessageArgs.GetCount()==2){
 		String idCite = Replace(MessageArgs[0],Vector<String>{"<",">","@","!"},Vector<String>{"","","",""});
 		if( IsRegestered(AuthorId)){
@@ -912,7 +943,7 @@ void Discord_Overwatch::DrawStatsPlayer(){
 	
 	
 	//Si le premier param est un chiffre
-	if(MessageArgs.GetCount() >=1 &&  isStringisANumber(MessageArgs[0])){
+	if(MessageArgs.GetCount() >=1 &&  IsANumber(MessageArgs[0])){
 		number = std::stoi(MessageArgs[0].ToStd());
 		MessageArgs.Remove(0,1);
 		for(String& str : MessageArgs){
@@ -927,7 +958,7 @@ void Discord_Overwatch::DrawStatsPlayer(){
 			}
 			else if( str.IsEqual("damage") || str.IsEqual("global") || str.IsEqual("tank") || str.IsEqual("heal")){
 				typeToManage = str;
-			}else if (!str.Find("/") && !isStringisANumber(str)){
+			}else if (!str.Find("/") && !IsANumber(str)){
 				if(test.LoadGraphParamFromBdd(str)){
 					BotPtr->CreateMessage(ChannelLastMessage,"Chargement des paramètres reussi.");
 				}else{
@@ -942,13 +973,13 @@ void Discord_Overwatch::DrawStatsPlayer(){
 		MessageArgs[0] = Replace(MessageArgs[0],Vector<String>{"\\","."," "},Vector<String>{"/","/","/"});
 		MessageArgs[1] = Replace(MessageArgs[1],Vector<String>{"\\","."," "},Vector<String>{"/","/","/"});
 		auto d = Split(MessageArgs[0],"/");
-		if(!isStringisANumber(d[0]) || !isStringisANumber(d[1]) || !isStringisANumber(d[2])){
+		if(!IsANumber(d[0]) || !IsANumber(d[1]) || !IsANumber(d[2])){
 			BotPtr->CreateMessage(ChannelLastMessage,MessageArgs[0] + " n'est pas une Date valide." );
 			return;	
 		}
 		d1 =Date(std::stoi(d[2].ToStd()),std::stoi(d[1].ToStd()),std::stoi(d[0].ToStd()));
 		d = Split(MessageArgs[1],"/");
-		if(!isStringisANumber(d[0]) || !isStringisANumber(d[1]) || !isStringisANumber(d[2])){
+		if(!IsANumber(d[0]) || !IsANumber(d[1]) || !IsANumber(d[2])){
 			BotPtr->CreateMessage(ChannelLastMessage,MessageArgs[1] + " n'est pas une Date valide." );
 			return;
 		}
@@ -966,7 +997,7 @@ void Discord_Overwatch::DrawStatsPlayer(){
 			}
 			else if( str.IsEqual("damage") || str.IsEqual("global") || str.IsEqual("tank") || str.IsEqual("heal")){
 				typeToManage = str;
-			}else if(!str.Find("/") && !isStringisANumber(str) ){
+			}else if(!str.Find("/") && !IsANumber(str) ){
 				if(test.LoadGraphParamFromBdd(str)){
 					BotPtr->CreateMessage(ChannelLastMessage,"Chargement des paramètres reussi.");
 				}else{
@@ -1042,7 +1073,7 @@ void Discord_Overwatch::DrawStatsPlayer(){
 	
 	
 	//Si le premier param est un chiffre
-	if(MessageArgs.GetCount() >=1 &&  isStringisANumber(MessageArgs[0])){
+	if(MessageArgs.GetCount() >=1 &&  IsANumber(MessageArgs[0])){
 		number = std::stoi(MessageArgs[0].ToStd());
 		MessageArgs.Remove(0,1);
 		for(String& str : MessageArgs){
@@ -1066,13 +1097,13 @@ void Discord_Overwatch::DrawStatsPlayer(){
 		MessageArgs[0] = Replace(MessageArgs[0],Vector<String>{"\\","."," "},Vector<String>{"/","/","/"});
 		MessageArgs[1] = Replace(MessageArgs[1],Vector<String>{"\\","."," "},Vector<String>{"/","/","/"});
 		auto d = Split(MessageArgs[0],"/");
-		if(!isStringisANumber(d[0]) || !isStringisANumber(d[1]) || !isStringisANumber(d[2])){
+		if(!IsANumber(d[0]) || !IsANumber(d[1]) || !IsANumber(d[2])){
 			BotPtr->CreateMessage(ChannelLastMessage,MessageArgs[0] + " n'est pas une Date valide." );
 			return;	
 		}
 		d1 =Date(std::stoi(d[2].ToStd()),std::stoi(d[1].ToStd()),std::stoi(d[0].ToStd()));
 		d = Split(MessageArgs[1],"/");
-		if(!isStringisANumber(d[0]) || !isStringisANumber(d[1]) || !isStringisANumber(d[2])){
+		if(!IsANumber(d[0]) || !IsANumber(d[1]) || !IsANumber(d[2])){
 			BotPtr->CreateMessage(ChannelLastMessage,MessageArgs[1] + " n'est pas une Date valide." );
 			return;
 		}
@@ -1316,7 +1347,7 @@ void Discord_Overwatch::DrawStatsEquipe(ValueMap payload){ //Permet de déssiner
 void Discord_Overwatch::updateRating(ValueMap payload){
 	if(MessageArgs.GetCount() ==1 ){
 		if(IsRegestered(AuthorId)){
-			if(isStringisANumber(MessageArgs[0])){
+			if(IsANumber(MessageArgs[0])){
 				Player* player = GetPlayersFromDiscordId(AuthorId);
 				if(player != nullptr){
 					String bTag = player->GetBattleTag();
