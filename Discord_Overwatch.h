@@ -47,7 +47,7 @@ class Discord_Overwatch: public DiscordModule{
 
 		//Test
 		void getStats(ValueMap payload);
-		void executeSQL(ValueMap payload);
+		//void executeSQL(ValueMap payload);
 		void testApi(ValueMap payload);
 		
 		//!ow register(battletag:BASTION#21406; pseudo:Clément)
