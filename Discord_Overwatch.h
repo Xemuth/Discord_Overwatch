@@ -36,6 +36,8 @@ Also, do not forget to activate it at your first connection by using :
 at the end of Database loading function
 */
 
+#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
+
 class Discord_Overwatch: public DiscordModule{
 	private:
 		bool bddLoaded = false;
@@ -45,61 +47,62 @@ class Discord_Overwatch: public DiscordModule{
 		Array<Equipe> equipes;
 		Array<Player> players;
 
+		enum Critere{GlobalRating, HealRating,TankRating, DpsRating, AutoRating};
+
+
 		//Test
 		void getStats(ValueMap payload);
 		//void executeSQL(ValueMap payload);
-		void testApi(ValueMap payload);
-		
+		void CheckApi();
 		//!ow register(battletag:BASTION#21406; pseudo:Clément)
 		void Register();// The main idea is " You must be registered to be addable to an equipe or create Equipe
-		
 		//!ow remove 
 		void DeleteProfil(); //Remove user from the bdd 
 		
 		//!ow createEquipe(team:Sombre est mon histoire)
-		void CreateEquipe(String teamName); //To add an equipe you must be registered. when an equipe is created, only 
+		void CreateEquipe(); //To add an equipe you must be registered. when an equipe is created, only 
 		
 		//!ow removeEquipe(team:Sombre est mon histoire)
-		void RemoveEquipe(String teamName); //you must have the right to remove equipe
+		void RemoveEquipe(); //you must have the right to remove equipe
 		
 		//!ow GiveRight(discordid:@NattyRoots; team:Sombre est mon histoire)
-		void GiveRight(String discordID, String teamName); //Allow equipe owner/ equipe righter to add person to the equipe
+		void GiveRight(); //Allow equipe owner/ equipe righter to add person to the equipe
 		
 		//!ow RemoveRight(discordid:@NattyRoots;team:Sombre est mon histoire)
-		void RemoveRight(String discordID, String teamName); //Remove equipe righter to one personne By discord ID
+		void RemoveRight(); //Remove equipe righter to one personne By discord ID
 		
 		//!ow AddPerson(discordid:@NattyRoots,team:Sombre est mon histoire)
-		void AddPersonToEquipe(String discordID, String teamName); //To add a person to an equipe you must have the right to add it
+		void AddPersonToEquipe(); //To add a person to an equipe you must have the right to add it
 		
 		//!ow RemovePerson(discordid:@NattyRoots,team:Sombre est mon histoire)
-		void RemovePersonFromEquipe(String discordID, String teamName); //Remove Person from  equipe (only righter can do it)
+		void RemovePersonFromEquipe(); //Remove Person from  equipe (only righter can do it)
 		
 		//!ow RemoveMeFromEquipe Sombre est mon histoire
-		void RemoveMeFromEquipe(String discordID, String teamName); //Remove u from one of your equipe
+		void RemoveMeFromEquipe(); //Remove u from one of your equipe
 		
 		//!ow upd
-		void ForceUpdate(String discordID); //Force update, based on the personne who make the call
+		void ForceUpdate(); //Force update, based on the personne who make the call
 		
 		//!ow Eupd Sombre est mon histoire
-		void ForceEquipeUpdate(String teamName); //Idk if only ppl who have right on equipe must do it or letting it free.
+		void ForceEquipeUpdate(); //Idk if only ppl who have right on equipe must do it or letting it free.
 		
 		//!ow DrawStatsEquipe rating Sombre est mon histoire
 		#ifdef flagGRAPHBUILDER_DB //Flag must be define to activate all DB func
-		void DrawStatsEquipe(String teamName); //Permet de dessiner le graph 
+		void DrawStatsEquipe(); //Permet de dessiner le graph 
 		
 		// saveActualGraph
-		void saveActualGraph(ValueMap payload);
+		void saveActualGraph();
 		void DrawStatsPlayer();
 		#endif
 		#ifndef flagGRAPHBUILDER_DB
-		void DrawStatsEquipe(String teamName); //Permet de dessiner le graph 
+		void DrawStatsEquipe(); //Permet de dessiner le graph 
 		void DrawStatsPlayer();
 		#endif
 		//Force la mise a jour de la personne (elle doit spécifier son elo)
-		void updateRating(ValueMap payload);
+		void updateRating();
 		
 		
-		void GraphProperties(ValueMap payload); //Allow you to define some property of the graph (if call without arg, just send Help)
+		void GraphProperties(); //Allow you to define some property of the graph (if call without arg, just send Help)
 		
 		bool UpdatePlayer(int playerId); //Function to call to update a player
 		void RetrieveData(); //USed to refresh all team 
@@ -115,10 +118,10 @@ class Discord_Overwatch: public DiscordModule{
 	
 		//READING Memory Func
 		
-		void GetCRUD(ValueMap payload);
-		void ReloadCRUD(ValueMap payload);
+		void GetCRUD();
+		void ReloadCRUD();
 		
-		void Help(ValueMap payload);
+		void Help();
 		
 		bool DoUserHaveRightOnTeam(String TeamName,String userId); // team ID, is here to handle team id
 		bool IsRegestered(String Id);
