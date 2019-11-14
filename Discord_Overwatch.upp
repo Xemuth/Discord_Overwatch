@@ -2,7 +2,6 @@ description "\377BI0,0,255";
 
 uses
 	Core,
-	Discord_Minecraft,
 	plugin/sqlite3;
 
 file

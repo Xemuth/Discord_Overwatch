@@ -40,88 +40,52 @@ at the end of Database loading function
 
 class Discord_Overwatch: public DiscordModule{
 	private:
+		void PrepareEvent();
+		//Commands
+		void CheckApi(ValueMap& payload);//!ow register(battletag:BASTION#21406; pseudo:Clément) // The main idea is " You must be registered to be addable to an equipe or create Equipe
+		void Register(ValueMap& payload);//!ow remove 
+		void DeleteProfil(ValueMap& payload); //Remove user from the bdd 
+		void CreateEquipe(ValueMap& payload); //!ow createEquipe(team:Sombre est mon histoire)//To add an equipe you must be registered. when an equipe is created, only 
+		void RemoveEquipe(ValueMap& payload);//!ow removeEquipe(team:Sombre est mon histoire) //you must have the right to remove equipe
+		void GiveRight(ValueMap& payload);//!ow GiveRight(discordid:@NattyRoots; team:Sombre est mon histoire) //Allow equipe owner/ equipe righter to add person to the equipe
+		void RemoveRight(ValueMap& payload);//!ow RemoveRight(discordid:@NattyRoots;team:Sombre est mon histoire) //Remove equipe righter to one personne By discord ID
+		void AddPersonToEquipe(ValueMap& payload);//!ow AddPerson(discordid:@NattyRoots,team:Sombre est mon histoire)//To add a person to an equipe you must have the right to add it
+		void RemovePersonFromEquipe(ValueMap& payload); //!ow RemovePerson(discordid:@NattyRoots,team:Sombre est mon histoire)//Remove Person from  equipe (only righter can do it)
+		void RemoveMeFromEquipe(ValueMap& payload);//!ow RemoveMeFromEquipe Sombre est mon histoire //Remove u from one of your equipe
+		void ForceUpdate(ValueMap& payload);//!ow upd //Force update, based on the personne who make the call
+		void ForceEquipeUpdate(ValueMap& payload);//!ow Eupd Sombre est mon histoire //Idk if only ppl who have right on equipe must do it or letting it free.
+		#ifdef flagGRAPHBUILDER_DB //Flag must be define to activate all DB func
+		void DrawStatsEquipe(ValueMap& payload);//!ow DrawStatsEquipe rating Sombre est mon histoire //Permet de dessiner le graph 
+		void saveActualGraph(ValueMap& payload);// saveActualGraph
+		void DrawStatsPlayer(ValueMap& payload);
+		#else
+		void DrawStatsEquipe(ValueMap& payload);//!ow DrawStatsEquipe rating Sombre est mon histoire //Permet de dessiner le graph 
+		void DrawStatsPlayer(ValueMap& payload);
+		#endif
+		void GetCRUD(ValueMap& payload);
+		void ReloadCRUD(ValueMap& payload);
+		void Help(ValueMap& payload);
+		virtual String Credit(ValueMap& json,bool sendCredit = true);
+		void startThread(ValueMap& payload);//Used to launch and stop thread used for auto update
+		void stopThread(ValueMap& payload);	
+		bool GetEtatThread(ValueMap& payload);
+		void GraphProperties(ValueMap& payload); //Allow you to define some property of the graph (if call without arg, just send Help)
+		//*********
+
+		//READING Memory Func
+		
+		bool UpdatePlayer(int playerId); //Function to call to update a player
+		
 		bool bddLoaded = false;
 		GraphDotCloud myGraph;
 		Sqlite3Session sqlite3; //DataBase
-
+		Thread autoUpdate;
+		bool threadStarted =false;
+		bool HowManyTimeBeforeUpdate= false;
 		Array<Equipe> equipes;
 		Array<Player> players;
 
 		enum Critere{GlobalRating, HealRating,TankRating, DpsRating, AutoRating};
-
-
-		//Test
-		void getStats(ValueMap payload);
-		//void executeSQL(ValueMap payload);
-		void CheckApi();
-		//!ow register(battletag:BASTION#21406; pseudo:Clément)
-		void Register();// The main idea is " You must be registered to be addable to an equipe or create Equipe
-		//!ow remove 
-		void DeleteProfil(); //Remove user from the bdd 
-		
-		//!ow createEquipe(team:Sombre est mon histoire)
-		void CreateEquipe(); //To add an equipe you must be registered. when an equipe is created, only 
-		
-		//!ow removeEquipe(team:Sombre est mon histoire)
-		void RemoveEquipe(); //you must have the right to remove equipe
-		
-		//!ow GiveRight(discordid:@NattyRoots; team:Sombre est mon histoire)
-		void GiveRight(); //Allow equipe owner/ equipe righter to add person to the equipe
-		
-		//!ow RemoveRight(discordid:@NattyRoots;team:Sombre est mon histoire)
-		void RemoveRight(); //Remove equipe righter to one personne By discord ID
-		
-		//!ow AddPerson(discordid:@NattyRoots,team:Sombre est mon histoire)
-		void AddPersonToEquipe(); //To add a person to an equipe you must have the right to add it
-		
-		//!ow RemovePerson(discordid:@NattyRoots,team:Sombre est mon histoire)
-		void RemovePersonFromEquipe(); //Remove Person from  equipe (only righter can do it)
-		
-		//!ow RemoveMeFromEquipe Sombre est mon histoire
-		void RemoveMeFromEquipe(); //Remove u from one of your equipe
-		
-		//!ow upd
-		void ForceUpdate(); //Force update, based on the personne who make the call
-		
-		//!ow Eupd Sombre est mon histoire
-		void ForceEquipeUpdate(); //Idk if only ppl who have right on equipe must do it or letting it free.
-		
-		//!ow DrawStatsEquipe rating Sombre est mon histoire
-		#ifdef flagGRAPHBUILDER_DB //Flag must be define to activate all DB func
-		void DrawStatsEquipe(); //Permet de dessiner le graph 
-		
-		// saveActualGraph
-		void saveActualGraph();
-		void DrawStatsPlayer();
-		#endif
-		#ifndef flagGRAPHBUILDER_DB
-		void DrawStatsEquipe(); //Permet de dessiner le graph 
-		void DrawStatsPlayer();
-		#endif
-		//Force la mise a jour de la personne (elle doit spécifier son elo)
-		void updateRating();
-		
-		
-		void GraphProperties(); //Allow you to define some property of the graph (if call without arg, just send Help)
-		
-		bool UpdatePlayer(int playerId); //Function to call to update a player
-		void RetrieveData(); //USed to refresh all team 
-		
-		//Used to launch and stop thread used for auto update
-		Thread autoUpdate;
-		bool threadStarted =false;
-		bool HowManyTimeBeforeUpdate= false;
-		bool GetEtatThread();
-		
-		void startThread();
-		void stopThread();	
-	
-		//READING Memory Func
-		
-		void GetCRUD();
-		void ReloadCRUD();
-		
-		void Help();
 		
 		bool DoUserHaveRightOnTeam(String TeamName,String userId); // team ID, is here to handle team id
 		bool IsRegestered(String Id);
@@ -143,9 +107,8 @@ class Discord_Overwatch: public DiscordModule{
 		void LoadMemoryCRUD();
 		void prepareOrLoadBDD(); //Used to load BDD
 	public:
-		
-		virtual String Credit(ValueMap json,bool sendCredit = true);
 		Discord_Overwatch(Upp::String _name, Upp::String _prefix);
+		Discord_Overwatch(Upp::String _name,Vector<String> _prefix);
 		void EventsMessageCreated(ValueMap payload);
 };
 

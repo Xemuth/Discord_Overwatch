@@ -27,43 +27,52 @@ Also, do not forget to activate it at your first connection by using :
 at the end of Database loading function
 */
 
+void Discord_Overwatch::PrepareEvent(){
+	EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("api"))CheckApi(e);});
+	EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("register"))Register(e);});
+	EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("remove"))DeleteProfil(e);});
+	EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("createequipe"))CreateEquipe(e);});
+	EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("removeequipe"))RemoveEquipe(e);});
+	EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("giveright"))GiveRight(e);});
+	EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("removeright"))RemoveRight(e);});
+	EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("crud"))GetCRUD(e);});
+	EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("reload"))ReloadCRUD(e);}); 
+	EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("addtoequipe"))AddPersonToEquipe(e);});
+	EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("removefromequipe"))RemovePersonFromEquipe(e);});
+	EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("removemefromequipe"))RemoveMeFromEquipe(e);});
+	EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("upd"))ForceUpdate(e);});
+	EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("eupd"))ForceEquipeUpdate(e);});
+	EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("graphproperties"))GraphProperties(e);}); 
+	#ifdef flagGRAPHBUILDER_DB //Flag must be define to activate all DB func
+		EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("drawstatsequipe"))DrawStatsEquipe(e);});
+		EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("savegraphparam"))saveActualGraph(e);}); 
+		EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("drawstats"))DrawStatsPlayer(e);}); 
+	#else
+		EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("drawstatsequipe"))DrawStatsEquipe(e);}); 
+	#endif
+	EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("startautoupdate"))startThread(e);});
+	EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("stopautoupdate"))stopThread(e);});
+	EventsMapMessageCreated.Add([&](ValueMap& e){if(NameOfFunction.IsEqual("autoupdate"))GetEtatThread(e);});
+}
+
 Discord_Overwatch::Discord_Overwatch(Upp::String _name, Upp::String _prefix):myGraph(1920,1080){
 	name = _name;
 	AddPrefix(_prefix);
 	
 	prepareOrLoadBDD();
 	LoadMemoryCRUD();
-	
-//	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("execsql"))executeSQL(e);});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("api"))CheckApi();});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("register"))Register();});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("remove"))DeleteProfil();});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("createequipe"))CreateEquipe();});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("removeequipe"))RemoveEquipe();});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("giveright"))GiveRight();});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("removeright"))RemoveRight();});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("crud"))GetCRUD();}); // TODO
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("reload"))ReloadCRUD();}); // TODO
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("addtoequipe"))AddPersonToEquipe();});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("removefromequipe"))RemovePersonFromEquipe();});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("removemefromequipe"))RemoveMeFromEquipe();});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("upd"))ForceUpdate();});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("eupd"))ForceEquipeUpdate();});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("upr"))updateRating();}); // TODO
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("graphproperties"))GraphProperties();}); // TODO
-	#ifdef flagGRAPHBUILDER_DB //Flag must be define to activate all DB func
-		EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("drawstatsequipe"))DrawStatsEquipe();});
-		EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("savegraphparam"))saveActualGraph(e);}); // TODO
-		EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("drawstats"))DrawStatsPlayer();}); // TODO
-	#endif
-	#ifndef flagGRAPHBUILDER_DB
-		EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("drawstatsequipe"))DrawStatsEquipe();}); 
-	#endif
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("startautoupdate"))startThread();});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("stopautoupdate"))stopThread();});
-	EventsMapMessageCreated.Add([&](ValueMap e){if(NameOfFunction.IsEqual("autoupdate"))GetEtatThread();});
-	
+	PrepareEvent();	
 }
+
+Discord_Overwatch::Discord_Overwatch(Upp::String _name,Vector<String> _prefix):myGraph(1920,1080){
+	name = _name;
+	AddPrefix(_prefix);
+	
+	prepareOrLoadBDD();
+	LoadMemoryCRUD();
+	PrepareEvent();	
+}
+
 
 void Discord_Overwatch::EventsMessageCreated(ValueMap payload){ //We admit BDD must be loaded to be active
 	for(auto &e : EventsMapMessageCreated){
@@ -183,7 +192,7 @@ void Discord_Overwatch::prepareOrLoadBDD(){
 	#undef MODEL
 }
 
-void Discord_Overwatch::ReloadCRUD(){
+void Discord_Overwatch::ReloadCRUD(ValueMap& payload){
 	LoadMemoryCRUD();
 	BotPtr->CreateMessage(ChannelLastMessage,"Crud rechargé !");	
 }
@@ -237,13 +246,13 @@ void Discord_Overwatch::executeSQL(ValueMap payload){
 	}
 }*/
 
-void Discord_Overwatch::GetCRUD(){
+void Discord_Overwatch::GetCRUD(ValueMap& payload){
 	BotPtr->CreateMessage(ChannelLastMessage, PrintMemoryCrude());	
 }
 
 //!ow Check
 //!ow Check(btag: BASTION#21406)
-void Discord_Overwatch::CheckApi(){
+void Discord_Overwatch::CheckApi(ValueMap& payload){
 	String Btag ="";
 	if(MessageArgs.Find("btag") != -1 &&  MessageArgs.Get("btag").GetTypeName().IsEqual("String")) Btag = MessageArgs.Get("btag").ToString();
 	if(Btag.GetCount() ==0){
@@ -259,11 +268,11 @@ void Discord_Overwatch::CheckApi(){
 		reqApi.GET();
 		auto json = ParseJSON(reqApi.Execute());
 		if(IsNull(json["error"])){
-			String stats = "``` Détail pour " << Btag << " :\n\n";;
+			String stats = "```Détail pour " << Btag << " :\n\n";;
 			stats<< "Parties gagnées : " << ((IsNull(json["gamesWon"]))?"error JSON":json["gamesWon"].ToString()) << "\n";
 			if(  !IsNull(json["level"]) && !IsNull(json["prestige"])){
-				int prestige = json["prestige"].Get<int64>();
-				int level = json["level"].Get<int64>();
+				int prestige = json["prestige"].Get<double>();
+				int level = json["level"].Get<double>();
 				int levels = 100 *prestige + level;
 				stats<< "Level : " << AsString(levels) << "\n";
 			}else{
@@ -278,12 +287,12 @@ void Discord_Overwatch::CheckApi(){
 					}
 				}
 			}
-			if(!IsNull(json["competitiveStats"] && !IsNull(json["competitiveStats"]["awards"])) && !IsNull(json["competitiveStats"]["games"])){
+			if(!IsNull(json["competitiveStats"]) && !IsNull(json["competitiveStats"]["awards"]) && !IsNull(json["competitiveStats"]["games"])){
 				stats << "Compétitive Stats : " << "\n\n";
 				stats << "Games Jouées:"<< ((IsNull(json["competitiveStats"]["games"]["played"]))?"Error JSON": json["competitiveStats"]["games"]["played"].ToString()) <<" ; Games Gagnées:" << ((IsNull(json["competitiveStats"]["games"]["won"]))?"Error JSON": json["competitiveStats"]["games"]["won"].ToString()) <<"\n";
 				stats << "Nombres de cartes de fin de partie:" << ((IsNull(json["competitiveStats"]["awards"]["cards"]))?"Error JSON": json["competitiveStats"]["awards"]["cards"].ToString()) <<" ;Nombre de médails:" << ((IsNull(json["competitiveStats"]["awards"]["medals"]))?"Error JSON": json["competitiveStats"]["awards"]["medals"].ToString()) << " ; Bronze:" << ((IsNull(json["competitiveStats"]["awards"]["medalsBronze"]))?"Error JSON": json["competitiveStats"]["awards"]["medalsBronze"].ToString()) << " ;Silver:" << ((IsNull(json["competitiveStats"]["awards"]["medalsSilver"]))?"Error JSON": json["competitiveStats"]["awards"]["medalsSilver"].ToString()) << " ;Gold: " << ((IsNull(json["competitiveStats"]["awards"]["medalsGold"]))?"Error JSON": json["competitiveStats"]["awards"]["medalsGold"].ToString()) <<"\n";
 			}
-			if(!IsNull(json["quickPlayStats"]&& !IsNull(json["quickPlayStats"]["awards"])) && !IsNull(json["quickPlayStats"]["games"])){
+			if(!IsNull(json["quickPlayStats"])&& !IsNull(json["quickPlayStats"]["awards"]) && !IsNull(json["quickPlayStats"]["games"])){
 				stats << "QuickPlay Stats : " << "\n\n";
 				stats << "Games Jouées:"<< ((IsNull(json["quickPlayStats"]["games"]["played"]))?"Error JSON": json["quickPlayStats"]["games"]["played"].ToString()) <<" ; Games Gagnées:" << ((IsNull(json["quickPlayStats"]["games"]["won"]))?"Error JSON": json["quickPlayStats"]["games"]["won"].ToString()) <<"\n";
 				stats << "Nombres de cartes de fin de partie:" << ((IsNull(json["quickPlayStats"]["awards"]["cards"]))?"Error JSON": json["quickPlayStats"]["awards"]["cards"].ToString()) <<" ;Nombre de médails:" << ((IsNull(json["quickPlayStats"]["awards"]["medals"]))?"Error JSON": json["quickPlayStats"]["awards"]["medals"].ToString()) << " ; Bronze:" << ((IsNull(json["quickPlayStats"]["awards"]["medalsBronze"]))?"Error JSON": json["quickPlayStats"]["awards"]["medalsBronze"].ToString()) << " ;Silver:" << ((IsNull(json["quickPlayStats"]["awards"]["medalsSilver"]))?"Error JSON": json["quickPlayStats"]["awards"]["medalsSilver"].ToString()) << " ;Gold: " << ((IsNull(json["quickPlayStats"]["awards"]["medalsGold"]))?"Error JSON": json["quickPlayStats"]["awards"]["medalsGold"].ToString()) <<"\n";
@@ -300,9 +309,10 @@ void Discord_Overwatch::CheckApi(){
 }
 
 //!ow Register(btag:BASTION#21406;name:Xemuth)
-void Discord_Overwatch::Register(){// The main idea is " You must be registered to be addable to an equipe or create Equipe	
+void Discord_Overwatch::Register(ValueMap& payload){// The main idea is " You must be registered to be addable to an equipe or create Equipe	
 	String Btag ="";
 	String Name ="";
+
 	if(MessageArgs.Find("btag") != -1 &&  MessageArgs.Get("btag").GetTypeName().IsEqual("String")) Btag = MessageArgs.Get("btag").ToString();
 	if(MessageArgs.Find("name") != -1 &&  MessageArgs.Get("name").GetTypeName().IsEqual("String")) Name = MessageArgs.Get("name").ToString();
 	
@@ -328,7 +338,7 @@ void Discord_Overwatch::Register(){// The main idea is " You must be registered 
 }
 
 //!ow Remove 
-void Discord_Overwatch::DeleteProfil(){ //Remove user from the bdd 
+void Discord_Overwatch::DeleteProfil(ValueMap& payload){ //Remove user from the bdd 
 	try{
 		Player* p = GetPlayersFromDiscordId(AuthorId);
 		if(p){
@@ -353,7 +363,7 @@ void Discord_Overwatch::DeleteProfil(){ //Remove user from the bdd
 }
 
 //!ow createEquipe(team:Sombre est mon histoire)
-void Discord_Overwatch::CreateEquipe(){ //To add an equipe you must be registered. when an equipe is created, only 
+void Discord_Overwatch::CreateEquipe(ValueMap& payload){ //To add an equipe you must be registered. when an equipe is created, only 
 	String team="";
 	if(MessageArgs.Find("team") != -1 &&  MessageArgs.Get("team").GetTypeName().IsEqual("String")) team = MessageArgs.Get("team").ToString();
 	if(team.GetCount() > 0){
@@ -391,7 +401,7 @@ void Discord_Overwatch::CreateEquipe(){ //To add an equipe you must be registere
 }
 
 //!ow removeEquipe(team:Sombre est mon histoire)
-void Discord_Overwatch::RemoveEquipe(){ //you must have the right to remove equipe
+void Discord_Overwatch::RemoveEquipe(ValueMap& payload){ //you must have the right to remove equipe
 	String team="";
 	if(MessageArgs.Find("team") != -1 &&  MessageArgs.Get("team").GetTypeName().IsEqual("String")) team = MessageArgs.Get("team").ToString();
 	if(team.GetCount() > 0){
@@ -421,7 +431,7 @@ void Discord_Overwatch::RemoveEquipe(){ //you must have the right to remove equi
 }
 
 //!ow GiveRight(discord:@NattyRoots;team:Sombre est mon histoire)
-void Discord_Overwatch::GiveRight(){ //Allow equipe owner/ equipe righter to add person to the equipe
+void Discord_Overwatch::GiveRight(ValueMap& payload){ //Allow equipe owner/ equipe righter to add person to the equipe
 	String team="";
 	String Discord="";
 	if(MessageArgs.Find("team") != -1 &&  MessageArgs.Get("team").GetTypeName().IsEqual("String")) team = MessageArgs.Get("team").ToString();
@@ -470,7 +480,7 @@ void Discord_Overwatch::GiveRight(){ //Allow equipe owner/ equipe righter to add
 }
 
 //!ow RemoveRight(discord: @NattyRoots;team: Sombre est mon histoire)
-void Discord_Overwatch::RemoveRight(){ //Remove equipe righter to one personne By discord ID
+void Discord_Overwatch::RemoveRight(ValueMap& payload){ //Remove equipe righter to one personne By discord ID
 	String team="";
 	String Discord="";
 	if(MessageArgs.Find("team") != -1 &&  MessageArgs.Get("team").GetTypeName().IsEqual("String")) team = MessageArgs.Get("team").ToString();
@@ -534,7 +544,7 @@ void Discord_Overwatch::RemoveRight(){ //Remove equipe righter to one personne B
 }
 
 //!ow AddToEquipe(discord: @NattyRoots;team: Sombre est mon histoire)
-void Discord_Overwatch::AddPersonToEquipe(){ //To add a person to an equipe you must have the right to add it
+void Discord_Overwatch::AddPersonToEquipe(ValueMap& payload){ //To add a person to an equipe you must have the right to add it
 	String team="";
 	String Discord="";
 	if(MessageArgs.Find("team") != -1 &&  MessageArgs.Get("team").GetTypeName().IsEqual("String")) team = MessageArgs.Get("team").ToString();
@@ -580,7 +590,7 @@ void Discord_Overwatch::AddPersonToEquipe(){ //To add a person to an equipe you 
 }
 
 //!ow RemoveFromEquipe(discord: @NattyRoots;team:Sombre est mon histoire)
-void Discord_Overwatch::RemovePersonFromEquipe(){ //Remove Person from and equipe (only righter can do it)
+void Discord_Overwatch::RemovePersonFromEquipe(ValueMap& payload){ //Remove Person from and equipe (only righter can do it)
 	String team="";
 	String Discord="";
 	if(MessageArgs.Find("team") != -1 &&  MessageArgs.Get("team").GetTypeName().IsEqual("String")) team = MessageArgs.Get("team").ToString();
@@ -636,7 +646,7 @@ void Discord_Overwatch::RemovePersonFromEquipe(){ //Remove Person from and equip
 }
 
 //!ow RemoveMeFromEquipe(team:Sombre est mon histoire)
-void Discord_Overwatch::RemoveMeFromEquipe(){ //Remove u from one of your equipe
+void Discord_Overwatch::RemoveMeFromEquipe(ValueMap& payload){ //Remove u from one of your equipe
 	String team="";
 	if(MessageArgs.Find("team") != -1 &&  MessageArgs.Get("team").GetTypeName().IsEqual("String")) team = MessageArgs.Get("team").ToString();
 	if (team.GetCount()==0){
@@ -675,7 +685,7 @@ void Discord_Overwatch::RemoveMeFromEquipe(){ //Remove u from one of your equipe
 }
 
 //!ow upd
-void Discord_Overwatch::ForceUpdate(){ //Force update, based on the personne who make the call
+void Discord_Overwatch::ForceUpdate(ValueMap& payload){ //Force update, based on the personne who make the call
 	if(IsRegestered(AuthorId)){
 		Player* player = GetPlayersFromDiscordId(AuthorId);
 		if(player){
@@ -692,7 +702,7 @@ void Discord_Overwatch::ForceUpdate(){ //Force update, based on the personne who
 }
 
 //!ow Eupd(team:Sombre est mon histoire)
-void Discord_Overwatch::ForceEquipeUpdate(){ // Idk if only ppl who have right on equipe must do it or letting it free.
+void Discord_Overwatch::ForceEquipeUpdate(ValueMap& payload){ // Idk if only ppl who have right on equipe must do it or letting it free.
 	String team="";
 	if(MessageArgs.Find("team") != -1 &&  MessageArgs.Get("team").GetTypeName().IsEqual("String")) team = MessageArgs.Get("team").ToString();
 	if (team.GetCount()==0){
@@ -783,7 +793,7 @@ bool Discord_Overwatch::UpdatePlayer(int playerId){
 #ifdef flagGRAPHBUILDER_DB //Flag must be define to activate all DB func
 
 //!ow DrawStatsEquipe(critere:globalrating ; team:MonEquipe ;  graph:GraphName)
-void Discord_Overwatch::DrawStatsEquipe(ValueMap payload){ //Permet de déssiner le graph 
+void Discord_Overwatch::DrawStatsEquipe(ValueMap& payload){ //Permet de déssiner le graph 
 	Critere crit = AutoRating;
 	Equipe* equ = nullptr;
 	String team="";
@@ -850,7 +860,7 @@ void Discord_Overwatch::DrawStatsEquipe(ValueMap payload){ //Permet de déssiner
 		function = &PlayerData::GetRatingDamage;
 	}
 	int cpt = 0;
-	for(int& pid : equipe->playersId){
+	for(int& pid : equ->playersId){
 		Player* atmP = GetPlayersFromId(pid);
 		if(atmP){
 			String FocussingRate ="";
@@ -905,7 +915,7 @@ void Discord_Overwatch::DrawStatsEquipe(ValueMap payload){ //Permet de déssiner
 }
 
 //!ow SaveGraph(name:My Graph name)
-void Discord_Overwatch::saveActualGraph(ValueMap payload){
+void Discord_Overwatch::saveActualGraph(ValueMap& payload){
 	String name ="";
 	if(MessageArgs.Find("name") != -1 &&  MessageArgs.Get("name").GetTypeName().IsEqual("String")) name = MessageArgs.Get("name").ToString();
 	if(name.GetCount()> 0){
@@ -924,7 +934,7 @@ void Discord_Overwatch::saveActualGraph(ValueMap payload){
 // !ow DrawStats(DateDebut: 27/06/2019; DateFin:30/06/2019 ; NbPointMax:20; critere:globalRating ; discord: @NattyRoots ; graph:My Graph Name) --> Après
 // Tous les critères sont optionnel. Par défault le Rating est AutoRating
 
-void Discord_Overwatch::DrawStatsPlayer(){
+void Discord_Overwatch::DrawStatsPlayer(ValueMap& payload){
 	Date DateDebut;
 	bool DateD=false;
 	Date DateFin;
@@ -1039,14 +1049,14 @@ void Discord_Overwatch::DrawStatsPlayer(){
 	test.DefineYName("Elo " + FocussingRate );
 	bool MaxPoint = (NbPointMax > 0);
 	int cpt = 0;
-	test.AddCourbe(Courbe(p->GetCommunName(),ValueTypeEnum::INT,ValueTypeEnum::INT,test.GenerateColor()));
+	test.AddCourbe(Courbe(playerToDraw->GetCommunName(),ValueTypeEnum::INT,ValueTypeEnum::INT,test.GenerateColor()));
 	auto& r = test[0];
 	r.ShowDot(true);
 	int NumberPoint = 0;
-	for(PlayerData& pd : p->datas){
+	for(PlayerData& pd : playerToDraw->datas){
 		if(MaxPoint){
-			if((p->datas.GetCount() - NumberPoint) <=NbPointMax){
-				if(dateF && dateD){
+			if((playerToDraw->datas.GetCount() - NumberPoint) <=NbPointMax){
+				if(DateF && DateD){
 					if(DateDebut <= pd.GetRetrieveDate() && DateFin >= pd.GetRetrieveDate()){
 						r.AddDot(Dot(Value(cpt),Value(CALL_MEMBER_FN(pd,function)()),&r));
 						cpt++;
@@ -1070,7 +1080,7 @@ void Discord_Overwatch::DrawStatsPlayer(){
 #else
 
 //!ow DrawStatsPlayer(rating,[@BASTION#21406],20) I actually want 20 last elo change
-void Discord_Overwatch::DrawStatsPlayer(){
+void Discord_Overwatch::DrawStatsPlayer(ValueMap& payload){
 	Date DateDebut;
 	bool DateD=false;
 	Date DateFin;
@@ -1211,7 +1221,7 @@ void Discord_Overwatch::DrawStatsPlayer(){
 }
 
 //!ow DrawStatsEquipe(rating,Sombre est mon histoire)
-void Discord_Overwatch::DrawStatsEquipe(){ //Permet de déssiner le graph 
+void Discord_Overwatch::DrawStatsEquipe(ValueMap& payload){ //Permet de déssiner le graph 
 		Critere crit = AutoRating;
 	Equipe* equ = nullptr;
 	String team="";
@@ -1329,191 +1339,127 @@ void Discord_Overwatch::DrawStatsEquipe(){ //Permet de déssiner le graph
 }
 #endif
 
+void Discord_Overwatch::GraphProperties(ValueMap& payload){
+	int nbModif =0;
+	
+	bool GraphName=false;
+	bool LegendsOfcourbes=false;
+	bool ValueOfDot=false;
+	bool ShowValueOnAxis=false;
+	bool SignIt=false;
+	
+	bool ActivateMaxDatePadding=false;
+	int MaxDatePadding=-1;
+	
+	bool ActivateLowestAxisY=false;
+	bool ActivateHighestAxisY=false;
+	int LowestAxisY=-1;
+	int HighestAxisY=-1;
+	
+	String AlphaColor="";
+	String MainColor="";
 
-//TODO
-void Discord_Overwatch::updateRating(){
-	if(MessageArgs.GetCount() ==1 ){
-		if(IsRegestered(AuthorId)){
-			if(IsANumber(MessageArgs[0])){
-				Player* player = GetPlayersFromDiscordId(AuthorId);
-				if(player != nullptr){
-					String bTag = player->GetBattleTag();
-					int Elo = std::stoi(MessageArgs[0].ToStd());
-					auto& buff =  player->datas[player->datas.GetCount()-1];
-					Date date = GetSysDate();
-					Sql sql(sqlite3);
-					if(sql*Insert(OW_PLAYER_DATA)(DATA_PLAYER_ID,player->GetPlayerId())(RETRIEVE_DATE,date)(GAMES_PLAYED,buff.GetGamesPlayed())(LEVEL,buff.GetLevel())(RATING,Elo)(RATING_DAMAGE,Elo)(RATING_TANK,Elo)(RATING_HEAL,Elo)(MEDALS_COUNT,buff.GetMedalsCount())(MEDALS_BRONZE,buff.GetMedalsB())(MEDALS_SILVER,buff.GetMedalsS())(MEDALS_GOLD,buff.GetMedalsG())){
-						player->datas.Add(PlayerData(sql.GetInsertedId().Get<int64>(),date,buff.GetGamesPlayed(),buff.GetLevel(),Elo,buff.GetMedalsCount(),buff.GetMedalsB(),buff.GetMedalsS(),buff.GetMedalsG()));
-						BotPtr->CreateMessage(ChannelLastMessage,"Enregistrement effectué !");
-					}else{
-						BotPtr->CreateMessage(ChannelLastMessage,"Erreur Insertion en BDD !");
-					}
-				}else{
-					BotPtr->CreateMessage(ChannelLastMessage,"Erreur inconnnue ! Pointeur indéfini");
-				}
-			}else{
-				BotPtr->CreateMessage(ChannelLastMessage,"L'argument n'est pas un chiffre !");
-			}
-		}else{
-			BotPtr->CreateMessage(ChannelLastMessage,"Vous n'êtes pas enregistré !");
-		}
-	}else{
-		BotPtr->CreateMessage(ChannelLastMessage,"Pas asser d'arguments !```!ow upr(ton rating)```");
+	if(MessageArgs.Find("graphname") != -1 &&  MessageArgs.Get("graphname").GetTypeName().IsEqual("bool")){
+		GraphName = MessageArgs.Get("graphname").Get<bool>();
+		myGraph.ShowGraphName(GraphName);
+		nbModif++;
 	}
-}
-
-
-void Discord_Overwatch::GraphProperties(){
-	if(	MessageArgs.GetCount() >0){
-		bool isSuccess = false;
-		String message1 = ToLower(MessageArgs[0]);
-		Value vF =ResolveType(MessageArgs[1]);
-		if(MessageArgs.GetCount() ==2 && message1.IsEqual("showgraphname")){
-			Value v =ResolveType(MessageArgs[1]);
-			if(v.GetTypeName().IsEqual("bool")){
-				bool vb = v.Get<bool>();
-				myGraph.ShowGraphName(vb);
-				isSuccess=true;
-			}else{
-				BotPtr->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
-			}
-		}else if(MessageArgs.GetCount() ==2 && message1.IsEqual("showlegendsofcourbes")){
-			Value v =ResolveType(MessageArgs[1]);
-			if(v.GetTypeName().IsEqual("bool")){
-				bool vb = v.Get<bool>();
-				myGraph.ShowLegendsOfCourbes(vb);
-				isSuccess=true;
-			}else{
-				BotPtr->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
-			}
-		}else if(MessageArgs.GetCount() ==2 && message1.IsEqual("showvalueofdot")){
-			Value v =ResolveType(MessageArgs[1]);
-			if(v.GetTypeName().IsEqual("bool")){
-				bool vb = v.Get<bool>();
-				myGraph.ShowValueOfDot(vb);
-				isSuccess=true;
-			}else{
-				BotPtr->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
-			}
-		}else if(MessageArgs.GetCount() ==2 && message1.IsEqual("activatemaxdatepadding")){
-			Value v =ResolveType(MessageArgs[1]);
-			if(v.GetTypeName().IsEqual("bool")){
-				bool vb = v.Get<bool>();
-				myGraph.ActivateMaxDatePadding(vb);
-				isSuccess=true;
-			}else{
-				BotPtr->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
-			}
-		}else if(MessageArgs.GetCount() ==2 && message1.IsEqual("setmaxdatepadding")){
-			Value v =ResolveType(MessageArgs[1]);
-			if(v.GetTypeName().IsEqual("int")){
-				int vi =v.Get<int>();
-				if(vi<0) vi =0;
-				myGraph.SetMaxDatePadding(vi);
-				isSuccess=true;
-			}else{
-				BotPtr->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
-			}
-		}else if(MessageArgs.GetCount() ==2 && message1.IsEqual("setactivatedspecifiedlowestaxisy")){
-			Value v =ResolveType(MessageArgs[1]);
-			if(v.GetTypeName().IsEqual("bool")){
-				bool vb = v.Get<bool>();
-				myGraph.SetActivatedSpecifiedLowestAxisY(vb);
-				isSuccess=true;
-			}else{
-				BotPtr->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
-			}
-		}else if(MessageArgs.GetCount() ==2 && message1.IsEqual("setspecifiedloweststartingnumberaxisy")){
-			Value v =ResolveType(MessageArgs[1]);
-			if(v.GetTypeName().IsEqual("int")){
-				int vi =v.Get<int>();
-				if(vi<0) vi =0;
-				myGraph.SetSpecifiedLowestStartingNumberAxisY(vi);
-				isSuccess=true;
-			}else{
-				BotPtr->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
-			}
-		}else if(MessageArgs.GetCount() ==2 && message1.IsEqual("setactivatedspecifiedhighestaxisy")){
-			Value v =ResolveType(MessageArgs[1]);
-			if(v.GetTypeName().IsEqual("bool")){
-				bool vb = v.Get<bool>();
-				myGraph.SetActivatedSpecifiedHighestAxisY(vb);
-				isSuccess=true;
-			}else{
-				BotPtr->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
-			}
-		}else if(MessageArgs.GetCount() ==2 && message1.IsEqual("setspecifiedhigheststartingnumberaxisy")){
-			Value v =ResolveType(MessageArgs[1]);
-			if(v.GetTypeName().IsEqual("int")){
-				int vi =v.Get<int>();
-				if(vi<0) vi =0;
-				myGraph.SetSpecifiedHighestStartingNumberAxisY(vi);
-				isSuccess=true;
-			}else{
-				BotPtr->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
-			}
-		}else if(MessageArgs.GetCount() ==4 &&message1.IsEqual("setalphacolor")){
-			Value r =ResolveType(MessageArgs[1]);
-			Value g =ResolveType(MessageArgs[2]);
-			Value b =ResolveType(MessageArgs[3]);
-			if(r.GetTypeName().IsEqual("int") && g.GetTypeName().IsEqual("int") && b.GetTypeName().IsEqual("int")){
-				int ri =r.Get<int>();
-				int gi =g.Get<int>();
-				int bi =b.Get<int>();
-				if(ri>255)r=255;
-				if(ri< 0) r=0;
-				if(gi>255)r=255;
-				if(gi< 0) r=0;
-				if(bi>255)r=255;
-				if(bi< 0) r=0;
-				myGraph.SetAlphaColor(Color(ri,gi,bi));
-				isSuccess=true;
-			}else{
-				BotPtr->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
-			}
-		}else if(MessageArgs.GetCount() ==4 && message1.IsEqual("setmaincolor")){
-			Value r =ResolveType(MessageArgs[1]);
-			Value g =ResolveType(MessageArgs[2]);
-			Value b =ResolveType(MessageArgs[3]);
-			if(r.GetTypeName().IsEqual("int") && g.GetTypeName().IsEqual("int") && b.GetTypeName().IsEqual("int")){
-				int ri =r.Get<int>();
-				int gi =g.Get<int>();
-				int bi =b.Get<int>();
-				if(ri>255)r=255;
-				if(ri< 0) r=0;
-				if(gi>255)r=255;
-				if(gi< 0) r=0;
-				if(bi>255)r=255;
-				if(bi< 0) r=0;
-				myGraph.SetMainColor(Color(ri,gi,bi));
-				isSuccess=true;
-			}else{
-				BotPtr->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
-			}
-		}else if(MessageArgs.GetCount() ==2 && message1.IsEqual("signit")){
-			Value v =ResolveType(MessageArgs[1]);
-			if(v.GetTypeName().IsEqual("bool")){
-				bool vb = v.Get<bool>();
-				myGraph.SignIt(vb);
-				isSuccess=true;
-			}else{
-				BotPtr->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
-			}
-		}else if(MessageArgs.GetCount() ==2 && message1.IsEqual("showvalueonaxis")){
-			Value v =ResolveType(MessageArgs[1]);
-			if(v.GetTypeName().IsEqual("bool")){
-				bool vb = v.Get<bool>();
-				myGraph.ShowValueOnAxis(vb);
-				isSuccess=true;
-			}else{
-				BotPtr->CreateMessage(ChannelLastMessage,"Argument invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
-			}
+	if(MessageArgs.Find("legendsofcourbes") != -1 &&  MessageArgs.Get("legendsofcourbes").GetTypeName().IsEqual("bool")){
+		LegendsOfcourbes = MessageArgs.Get("legendsofcourbes").Get<bool>();
+		myGraph.ShowLegendsOfCourbes(LegendsOfcourbes);
+		nbModif++;
+	}
+	if(MessageArgs.Find("valueofdot") != -1 &&  MessageArgs.Get("valueofdot").GetTypeName().IsEqual("bool")){
+		ValueOfDot = MessageArgs.Get("valueofdot").Get<bool>();
+		myGraph.ShowValueOfDot(ValueOfDot);
+		nbModif++;
+	}
+	if(MessageArgs.Find("showvalueonaxis") != -1 &&  MessageArgs.Get("showvalueonaxis").GetTypeName().IsEqual("bool")){
+		ShowValueOnAxis = MessageArgs.Get("showvalueonaxis").Get<bool>();
+		myGraph.ShowValueOnAxis(ShowValueOnAxis);
+		nbModif++;
+	}
+	if(MessageArgs.Find("signit") != -1 &&  MessageArgs.Get("signit").GetTypeName().IsEqual("bool")){
+		SignIt = MessageArgs.Get("signit").Get<bool>();
+		myGraph.SignIt(SignIt);
+		nbModif++;
+	}
+	if(MessageArgs.Find("activatemaxdatapadding") != -1 &&  MessageArgs.Get("activatemaxdatapadding").GetTypeName().IsEqual("bool")){
+		ActivateMaxDatePadding = MessageArgs.Get("activatemaxdatapadding").Get<bool>();
+		myGraph.ActivateMaxDatePadding(ActivateMaxDatePadding);
+		nbModif++;
+	}
+	if(MessageArgs.Find("maxdatepadding") != -1 &&  MessageArgs.Get("maxdatepadding").GetTypeName().IsEqual("int")){
+		MaxDatePadding = MessageArgs.Get("maxdatepadding").Get<int>();
+		myGraph.SetMaxDatePadding(MaxDatePadding);
+		nbModif++;
+	}
+	if(MessageArgs.Find("activatelowestaxisy") != -1 &&  MessageArgs.Get("activatelowestaxisy").GetTypeName().IsEqual("bool")){
+		ActivateLowestAxisY = MessageArgs.Get("activatelowestaxisy").Get<bool>();
+		myGraph.SetActivatedSpecifiedLowestAxisY(ActivateLowestAxisY);
+		nbModif++;
+	}
+	if(MessageArgs.Find("activatehighestaxisy") != -1 &&  MessageArgs.Get("activatehighestaxisy").GetTypeName().IsEqual("bool")){
+		ActivateHighestAxisY = MessageArgs.Get("activatehighestaxisy").Get<bool>();
+		myGraph.SetActivatedSpecifiedHighestAxisY(ActivateHighestAxisY);
+		nbModif++;
+	}
+	if(MessageArgs.Find("lowestaxisy") != -1 &&  MessageArgs.Get("lowestaxisy").GetTypeName().IsEqual("int")){
+		LowestAxisY = MessageArgs.Get("lowestaxisy").Get<int>();
+		myGraph.SetSpecifiedLowestStartingNumberAxisY(LowestAxisY);
+		nbModif++;
+	}
+    if(MessageArgs.Find("hightestaxisy") != -1 &&  MessageArgs.Get("hightestaxisy").GetTypeName().IsEqual("int")){
+    	HighestAxisY = MessageArgs.Get("hightestaxisy").Get<int>();
+    	myGraph.SetSpecifiedHighestStartingNumberAxisY(HighestAxisY);
+    	nbModif++;
+    }
+	if(MessageArgs.Find("alphacolor") != -1 &&  MessageArgs.Get("alphacolor").GetTypeName().IsEqual("String")){
+		AlphaColor = MessageArgs.Get("alphacolor").ToString();
+		Vector<String> rgb = Split(AlphaColor,",");
+		Value r =ResolveType(rgb[0]);
+		Value g =ResolveType(rgb[1]);
+		Value b =ResolveType(rgb[2]);
+		if(r.GetTypeName().IsEqual("int") && g.GetTypeName().IsEqual("int") && b.GetTypeName().IsEqual("int")){
+			int ri =r.Get<int>();
+			int gi =g.Get<int>();
+			int bi =b.Get<int>();
+			if(ri>255)r=255;
+			if(ri< 0) r=0;
+			if(gi>255)r=255;
+			if(gi< 0) r=0;
+			if(bi>255)r=255;
+			if(bi< 0) r=0;
+			myGraph.SetAlphaColor(Color(ri,gi,bi));
+			nbModif++;
+		}else{
+			BotPtr->CreateMessage(ChannelLastMessage,"Warning : Les Chiffres spécifier pour AlphaColor sont invalide !");
 		}
-		else{
-			BotPtr->CreateMessage(ChannelLastMessage,"Proprieté invalide ! Tapez \"!ow GraphProperties\" pour avoir la liste des proprieter disponible");
+	}
+	if(MessageArgs.Find("maincolor") != -1 &&  MessageArgs.Get("maincolor").GetTypeName().IsEqual("String")){
+		MainColor = MessageArgs.Get("maincolor").ToString();
+		Vector<String> rgb = Split(AlphaColor,",");
+		Value r =ResolveType(rgb[0]);
+		Value g =ResolveType(rgb[1]);
+		Value b =ResolveType(rgb[2]);
+		if(r.GetTypeName().IsEqual("int") && g.GetTypeName().IsEqual("int") && b.GetTypeName().IsEqual("int")){
+			int ri =r.Get<int>();
+			int gi =g.Get<int>();
+			int bi =b.Get<int>();
+			if(ri>255)r=255;
+			if(ri< 0) r=0;
+			if(gi>255)r=255;
+			if(gi< 0) r=0;
+			if(bi>255)r=255;
+			if(bi< 0) r=0;
+			myGraph.SetAlphaColor(Color(ri,gi,bi));
+			nbModif++;
+		}else{
+			BotPtr->CreateMessage(ChannelLastMessage,"Warning : Les Chiffres spécifier pour MainColor sont invalide !");
 		}
-		if(isSuccess) BotPtr->CreateMessage(ChannelLastMessage,"Succès !");
-	}else{
+		nbModif++;
+	}
+	if(nbModif ==0){
 		String help ="";
 		help <<"```";
 		help << "!ow graphProperties(ShowGraphName, True||False)" <<" -> Définie si le nom du graph est affiché sur l'image.\n\n";
@@ -1531,84 +1477,73 @@ void Discord_Overwatch::GraphProperties(){
 		help << "!ow graphProperties(SignIt, True||False)"<<" -> Définie si le graph est signé ou non.\n\n";
 		help <<"```\n\n";
 		BotPtr->CreateMessage(ChannelLastMessage,help);
-	}
-}
-
-bool Discord_Overwatch::GetEtatThread(){//used to return if thread is start or stopped
-	if(MessageArgs.GetCount()==0){
-		if(autoUpdate.IsOpen()){
-			HowManyTimeBeforeUpdate =true;
-			BotPtr->CreateMessage(ChannelLastMessage,"Actuellement, l'autoUpdater est lancé !");	
-		}else{
-			BotPtr->CreateMessage(ChannelLastMessage,"Actuellement, l'autoUpdater est coupé !");	
-		}
-		return true;
 	}else{
-		BotPtr->CreateMessage(ChannelLastMessage,"Erreur d'arguments !```!ow AutoUpdate()```");	
-		return false;
+		BotPtr->CreateMessage(ChannelLastMessage,nbModif +" Modification(s) effectuée(s) sur le graph !");
 	}
 }
 
-void Discord_Overwatch::startThread(){
-	if(MessageArgs.GetCount()==0){
-		if(autoUpdate.IsOpen()){
-			BotPtr->CreateMessage(ChannelLastMessage,"L'autoUpdated est déjà lancé !");	
-		}else{
-			autoUpdate.Run([&](){threadStarted =true;for(;;){
+bool Discord_Overwatch::GetEtatThread(ValueMap& payload){//used to return if thread is start or stopped
+	if(autoUpdate.IsOpen()){
+		HowManyTimeBeforeUpdate =true;
+		BotPtr->CreateMessage(ChannelLastMessage,"Actuellement, l'autoUpdater est lancé !");	
+	}else{
+		BotPtr->CreateMessage(ChannelLastMessage,"Actuellement, l'autoUpdater est coupé !");	
+	}
+	return true;
+}
 
-									for(int e = 0; e < 3600 ; e++){
-										if(!threadStarted) break;
-										if(HowManyTimeBeforeUpdate){ 
-											BotPtr->CreateMessage(ChannelLastMessage,"Prochaine mise à jours dans : "+ AsString((3600-e)/60)+"min");	
-											HowManyTimeBeforeUpdate=false;
-										}
-										Sleep(1000);
-									}
+void Discord_Overwatch::startThread(ValueMap& payload){
+	if(autoUpdate.IsOpen()){
+		BotPtr->CreateMessage(ChannelLastMessage,"L'autoUpdated est déjà lancé !");	
+	}else{
+		autoUpdate.Run([&](){threadStarted =true;for(;;){
+
+								for(int e = 0; e < 3600 ; e++){
 									if(!threadStarted) break;
-									for(Player &p : players){
-										if(!threadStarted) break;
-										UpdatePlayer(p.GetPlayerId());
-									}	
-									BotPtr->CreateMessage(ChannelLastMessage,"Mise à jour en terminée !");
+									if(HowManyTimeBeforeUpdate){ 
+										BotPtr->CreateMessage(ChannelLastMessage,"Prochaine mise à jours dans : "+ AsString((3600-e)/60)+"min");	
+										HowManyTimeBeforeUpdate=false;
+									}
+									Sleep(1000);
 								}
-								Cout() << "fin du thread"<<"\n";
-								return;});
-			BotPtr->CreateMessage(ChannelLastMessage,"L'autoUpdated est désormait lancé !");
-		}
-	}else{
-		BotPtr->CreateMessage(ChannelLastMessage,"Erreur d'arguments !```!ow startAutoUpdate()```");	
+								if(!threadStarted) break;
+								for(Player &p : players){
+									if(!threadStarted) break;
+									UpdatePlayer(p.GetPlayerId());
+								}	
+								BotPtr->CreateMessage(ChannelLastMessage,"Mise à jour en terminée !");
+							}
+							Cout() << "fin du thread"<<"\n";
+							return;});
+		BotPtr->CreateMessage(ChannelLastMessage,"L'autoUpdated est désormait lancé !");
 	}
 }
-void Discord_Overwatch::stopThread(){
-	if(MessageArgs.GetCount()==0){
-		if(autoUpdate.IsOpen()){
-			threadStarted=false;
-			autoUpdate.Wait();
-			BotPtr->CreateMessage(ChannelLastMessage,"L'autoUpdated est désormait coupé !");	
-		}else{
-			BotPtr->CreateMessage(ChannelLastMessage,"L'autoUpdated n'est pas lancé !");	
-		}
+void Discord_Overwatch::stopThread(ValueMap& payload){
+	if(autoUpdate.IsOpen()){
+		threadStarted=false;
+		autoUpdate.Wait();
+		BotPtr->CreateMessage(ChannelLastMessage,"L'autoUpdated est désormait coupé !");	
 	}else{
-		BotPtr->CreateMessage(ChannelLastMessage,"Erreur d'arguments !```!ow stopAutoUpdate()```");	
+		BotPtr->CreateMessage(ChannelLastMessage,"L'autoUpdated n'est pas lancé !");	
 	}
 }
 
 
-void Discord_Overwatch::Help(){
+void Discord_Overwatch::Help(ValueMap& payload){
 	String help ="";
 	int pageNumber = 2;
 		help << "```";
 		help << "Commandes module discord page OverWatch No "  << 1  << "/" << pageNumber << "\n";
-		help << "!ow ExecSQL(SqlToExecute)" <<" -> Execute du SQL passé en paramètre.\n\n";
-		help << "!ow Api(BattleTag)"<<" -> Récupère le Rank, depuis l'api OverWatch, du BattleTag passé en paramètre.\n\n";
-		help << "!ow Register(BattleTag,Pseudo)"<<" -> Enregistre votre identité auprès du bot(Necessaire pour toutes les commandes en liaison avec les équipes.\n\n";
-		help << "!ow Remove()"<<" -> Efface votre identité auprès du bot #RGPD_Friendly.\n\n";
-		help << "!ow CreateEquipe(EquipeName)"<<" -> Vous permet de créer une équipe(Une equipes contient des players et permet la génération de graph).\n\n";
-		help << "!ow RemoveEquipe(EquipeName)"<<" -> Vous permet de supprimer une équipe(n'importe qui ayant les droits sur l'équipe à le droit de supprimer l'équipe).\n\n";
-		help << "!ow GiveRight(DiscordName,EquipeName)"<<" -> Vous permet de donner des droits pour administrer votre équipe.\n\n";
-		help << "!ow RemoveRight(DiscordName,EquipeName)"<<" -> Vous permet de retirer les droits à un des administrateurs de l'équipe(sauf Admin).\n\n";
-		help << "!ow AddToEquipe(DiscordName,EquipeName)"<<" -> Ajoute l'utilisateur à l'équipe (vous devez avoir les droits sur l'équipe !).\n\n";
-		help << "!ow RemoveFromEquipe(DiscordName,EquipeName)"<<" -> Retire l'utilisateur de l'équipe(vous devez avoir les droits sur l'équipe !).\n\n";
+		help << "Les différents arguments sont : Btag , Name , Team , Name , Critere , DateDebut , DateFin , Graph \n\n";
+		help << "!ow Check(Ops->Btag: Bastion#21406)"<<" -> Récupère le Rank, depuis l'api OverWatch, du BattleTag passé en paramètre.\n\n";
+		help << "!ow register(Btag:BASTION#21406; name:Clément)"<<" -> Enregistre votre identitée auprès du bot(Necessaire pour toutes les commandes en liaison avec les équipes. Ses arguments sont btag\n\n";
+		help << "!ow Remove"<<" -> Efface votre identité auprès du bot #RGPD_Friendly.\n\n";
+		help << "!ow CreateEquipe(team:Ma team)"<<" -> Vous permet de créer une équipe(Une equipes contient des players et permet la génération de graph).\n\n";
+		help << "!ow RemoveEquipe(team:Ma team)"<<" -> Vous permet de supprimer une équipe(n'importe qui ayant les droits sur l'équipe à le droit de supprimer l'équipe).\n\n";
+		help << "!ow GiveRight(discord: @Xemuth,team:Ma team)"<<" -> Vous permet de donner des droits pour administrer votre équipe.\n\n";
+		help << "!ow RemoveRight(discord: @NattyRoots,team:Ma team)"<<" -> Vous permet de retirer les droits à un des administrateurs de l'équipe(sauf Admin).\n\n";
+		help << "!ow AddToEquipe(discord: @NattyRoots,team:Ma team)"<<" -> Ajoute l'utilisateur à l'équipe (vous devez avoir les droits sur l'équipe !).\n\n";
+		help << "!ow RemoveFromEquipe(discord: @NattyRoots,team:Ma team)"<<" -> Retire l'utilisateur de l'équipe(vous devez avoir les droits sur l'équipe !).\n\n";
 		help <<"```";
 	
 	
@@ -1623,20 +1558,18 @@ void Discord_Overwatch::Help(){
 					help ="";
 					help << "```";
 					help << "Commandes module discord OverWatch page No "  << 2  << "/" << pageNumber << "\n";
-					help << "!ow Upd()"<<" -> Mets à jours votre profile niveau stats.\n\n";
-					help << "!ow Eupd(EquipeName)"<<" -> Mets à jours toute l'équipe par rapport à l'Api(Vous devez être dans l'équipe.).\n\n";
+					help << "Les différents arguments sont : Btag , Name , Team , Name , Critere , DateDebut , DateFin , Graph \n\n";
+					help << "!ow Upd"<<" -> Mets à jours votre profile niveau stats.\n\n";
+					help << "!ow Eupd(team:Ma team)"<<" -> Mets à jours toute l'équipe par rapport à l'Api(Vous devez être dans l'équipe.).\n\n";
 					#ifdef flagGRAPHBUILDER_DB
-					help << "!ow DrawStatsEquipe(ValueToStatify,EquipeName,graphParameterName)"<<" -> Dessine un graph par rapport à la value à afficher (rating, levels, medals, games) par rapport au paramètres chargés.\n\n";
-					help << "!ow DrawStats( (Date Debut,Date fin) || Nombre de point,Type de Ranking, BattleTag, Paramètre de Graph)"<<" -> Dessine un graph par rapport à la value à afficher (rating, damage, tank, heal).\n\n";
-					help << "!ow SaveGraphParam(NameOfSavedParam)"<<" -> Sauvegarde les paramètres actuel en BDD, n'oubliez pas le nom du paramétrage !\n\n";
+					help << "!ow DrawStatsEquipe(critere:AutoRating ; team:MonEquipe ;  graph:GraphName)"<<" -> DrawStatsEquipe permet de dessiner un graph de l'évolution de l'équipe selons certains critères qui sont GlobalRating, HealRating,TankRating, DpsRating, AutoRating. Tous les champs sauf team sont optionnel. Par défault le critère est AutoRating et les paramètres de graph sont les derniers utilisés.\n\n";
+					help << "!ow DrawStats(DateDebut: 27/06/2019; DateFin:30/06/2019 ; NbPointMax:20; critere:globalRating ; discord: @NattyRoots ; graph:My Graph Name)"<<" -> Dessine un graph perso.\n\n";
+					help << "!ow SaveGraphParam(name:Propre)"<<" -> Sauvegarde les paramètres actuel en BDD soous le nom définie par 'Name' !\n\n";
+					#else
+					help << "!ow DrawStatsEquipe(critere:AutoRating ; team:MonEquipe )"<<" -> DrawStatsEquipe permet de dessiner un graph de l'évolution de l'équipe selons certains critères qui sont GlobalRating, HealRating,TankRating, DpsRating, AutoRating. Tous les champs sauf team sont optionnel. Par défault le critère est AutoRating et les paramètres de graph sont les derniers utilisés.\n\n";
+					help << "!ow DrawStats(DateDebut: 27/06/2019; DateFin:30/06/2019 ; NbPointMax:20; critere:globalRating ; discord: @NattyRoots )"<<" -> Dessine un graph perso.\n\n";
 					#endif
-					#ifndef flagGRAPHBUILDER_DB
-					help << "!ow DrawStatsEquipe(ValueToStatify,EquipeName)"<<" -> Dessine un graph par rapport à la value à afficher (rating, levels, medals, games).\n\n";
-					help << "!ow DrawStats( (Date Debut,Date fin) || Nombre de point,Type de Ranking, BattleTag)"<<" -> Dessine un graph par rapport à la value à afficher (rating, damage, tank, heal).\n\n";
-					#endif
-					help << "!ow GraphProperties(Property,Value)"<<" ->Definie les proprieté pour le graph, Si aucun arguments.\n\n";
 					help << "!ow GraphProperties()"<<" ->renvoie l'aide sur les proprietées.\n\n";
-					help << "!ow Upr(rating)" <<" -> Update l'élo de la personne via le chiffre passé.\n\n";
 					help << "!ow credit()" <<" -> Affiche les crédit du module Overwatch.\n\n";
 					help <<"```";
 				break;
@@ -1646,7 +1579,7 @@ void Discord_Overwatch::Help(){
 	}
 }
 
-String Discord_Overwatch::Credit(ValueMap json,bool sendCredit){
+String Discord_Overwatch::Credit(ValueMap& json,bool sendCredit){
 	String credit =  "----OverWatch Module have been made By Clément Hamon---\n";
 	credit << "-----------https://github.com/Xemuth-----------\n";
 	credit << "Overwatch module is used to track stats of various player on Overwatch\nIt track elo's evolution, medals, wins and provide graphical view of the progression\nThis module use GraphBuilder, a package used to draw graph dynamically\n";
